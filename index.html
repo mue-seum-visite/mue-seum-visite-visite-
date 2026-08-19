@@ -71,6 +71,9 @@
       margin-bottom: 15px;
       border: 1px solid #2a2a2a;
       cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
       transition: border-color 0.2s;
     }
     .route-card:hover {
@@ -112,12 +115,18 @@
   <div id="container-parcours"></div>
 
   <script>
-    // Liste des parcours
-    let parcoursData = [
-      { id: 1, titre: "Promenade des Marchaux", lieu: "Châtelet, Hainaut", dur: "2h 34min", dist: "10,6 km" },
-      { id: 2, titre: "Sentier de l'Ourthe", lieu: "Province de Liège", dur: "1h 45min", dist: "7,2 km" },
-      { id: 3, titre: "Cap Gris-Nez", lieu: "Audinghen, France", dur: "33min", dist: "2,3 km" }
-    ];
+    let parcoursData = [];
+
+    // Chargement automatique des parcours depuis le fichier externe
+    fetch('parcours.json')
+      .then(response => response.json())
+      .then(data => {
+        parcoursData = data;
+        afficherParcours(parcoursData);
+      })
+      .catch(error => {
+        console.error("Erreur de chargement des parcours :", error);
+      });
 
     function afficherParcours(liste) {
       const container = document.getElementById('container-parcours');
@@ -130,10 +139,10 @@
 
       liste.forEach(item => {
         container.innerHTML += `
-          <div class="route-card">
+          <a href="${item.fichier}" class="route-card">
             <div class="card-title">${item.titre}</div>
             <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
-          </div>
+          </a>
         `;
       });
     }
@@ -148,12 +157,11 @@
     }
 
     function permuterParcours() {
-      parcoursData.push(parcoursData.shift()); // Décale le premier élément à la fin
-      filtrerParcours(); // Maintient la recherche active même après permutation
+      if (parcoursData.length > 0) {
+        parcoursData.push(parcoursData.shift());
+        filtrerParcours();
+      }
     }
-
-    // Affichage initial au chargement
-    afficherParcours(parcoursData);
   </script>
 
 </body>

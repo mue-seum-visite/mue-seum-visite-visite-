@@ -1,9 +1,9 @@
 {
   "id": 1,
   "titre": "Charleroi 1911 : L'Épopée de l'Exposition Universelle",
-  "lieu": "Châtelet, Hainaut",
+  "lieu": "Charleroi, Hainaut",
   "dur": "2h 34min",
   "dist": "10,6 km",
-  "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Ferraris_-_Chatelet.jpg/800px-Ferraris_-_Chatelet.jpg",
-  "gps": "https://www.google.com/maps/search/?api=1&query=50.404114,4.523728"
+  "image": "carte-1911.jpg",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4122,4.4447"
 }

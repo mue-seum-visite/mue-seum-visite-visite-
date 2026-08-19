@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MUE.SÉUM</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin: 0;
+    }
+    .title span {
+      color: #d4af37; /* Couleur dorée pour SÉUM */
+    }
+    .subtitle {
+      font-size: 0.8rem;
+      color: #a0a0a0;
+      letter-spacing: 2px;
+      margin-top: 5px;
+    }
+    .search-bar {
+      margin: 20px 0;
+    }
+    .search-input {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: 25px;
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      color: #fff;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .btn-shuffle {
+      background-color: #d4af37;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .route-card {
+      background-color: #1e1e1e;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      border: 1px solid #2a2a2a;
+    }
+    .card-image {
+      width: 100%;
+      height: 180px;
+      background-size: cover;
+      background-position: center;
+    }
+    .card-content {
+      padding: 15px;
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+    }
+    .card-details {
+      color: #888;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1 class="title">MUE.<span>SÉUM</span></h1>
+    <div class="subtitle">L'ÉCHO DES TOILES</div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" class="search-input" placeholder="Rechercher villes, parcours...">
+  </div>
+
+  <div class="controls">
+    <span>Itinéraires</span>
+    <button class="btn-shuffle" onclick="permuterParcours()">🔀 Permuter l'ordre</button>
+  </div>
+
+  <div id="container-parcours"></div>
+
+  <script>
+    const parcoursData = [
+      { id: 1, titre: "Promenade des Marchaux", lieu: "Châtelet, Hainaut", dur: "2h 34min", dist: "10,6 km", img: "https://picsum.photos/400/200?random=1" },
+      { id: 2, titre: "Sentier de l'Ourthe", lieu: "Province de Liège", dur: "1h 45min", dist: "7,2 km", img: "https://picsum.photos/400/200?random=2" },
+      { id: 3, titre: "Cap Gris-Nez", lieu: "Audinghen, France", dur: "33min", dist: "2,3 km", img: "https://picsum.photos/400/200?random=3" }
+    ];
+
+    function afficherParcours() {
+      const container = document.getElementById('container-parcours');
+      container.innerHTML = '';
+      parcoursData.forEach(item => {
+        container.innerHTML += `
+          <div class="route-card">
+            <div class="card-image" style="background-image: url('${item.img}')"></div>
+            <div class="card-content">
+              <div class="card-title">${item.titre}</div>
+              <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function permuterParcours() {
+      parcoursData.push(parcoursData.shift()); // Décale le premier élément à la fin
+      afficherParcours();
+    }
+
+    afficherParcours();
+  </script>
+
+</body>
+</html>

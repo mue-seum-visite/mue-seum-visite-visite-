@@ -97,7 +97,7 @@
       font-size: 0.9rem;
       margin-bottom: 10px;
     }
-    .btn-gps {
+    .btn-gps, .btn-discover {
       display: block;
       text-align: center;
       background-color: #d4af37;
@@ -108,6 +108,10 @@
       font-weight: bold;
       font-size: 0.9rem;
       margin-top: 10px;
+    }
+    .btn-discover {
+      background-color: #ffffff;
+      color: #000000;
     }
     .no-result {
       text-align: center;
@@ -169,6 +173,7 @@
             ${item.image ? `<img src="${item.image}" class="card-img" alt="">` : ''}
             <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
             ${item.gps ? `<a href="${item.gps}" target="_blank" class="btn-gps">📍 Me rendre à la balade</a>` : ''}
+            <a href="vue-parcours.html?id=${item.id}" class="btn-discover">🗺️ Découvrir ce parcours</a>
           </div>
         `;
       });

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MUE.SÉUM</title>
+  <title>MUE.SÉUM - Accueil</title>
+  <!-- PAGE DE GARDE ACCUEIL - MUE.SÉUM -->
   <style>
     body {
       background-color: #121212;
@@ -43,6 +44,10 @@
       color: #fff;
       font-size: 1rem;
       box-sizing: border-box;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: #d4af37;
     }
     .controls {
       display: flex;
@@ -61,28 +66,30 @@
     }
     .route-card {
       background-color: #1e1e1e;
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 20px;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 15px;
       border: 1px solid #2a2a2a;
+      cursor: pointer;
+      transition: border-color 0.2s;
     }
-    .card-image {
-      width: 100%;
-      height: 180px;
-      background-size: cover;
-      background-position: center;
-    }
-    .card-content {
-      padding: 15px;
+    .route-card:hover {
+      border-color: #d4af37;
     }
     .card-title {
       font-size: 1.2rem;
       font-weight: bold;
-      margin: 0 0 5px 0;
+      margin: 0 0 6px 0;
+      color: #ffffff;
     }
     .card-details {
-      color: #888;
+      color: #aaa;
       font-size: 0.9rem;
+    }
+    .no-result {
+      text-align: center;
+      color: #777;
+      margin-top: 30px;
     }
   </style>
 </head>
@@ -94,7 +101,7 @@
   </div>
 
   <div class="search-bar">
-    <input type="text" class="search-input" placeholder="Rechercher villes, parcours...">
+    <input type="text" id="search-input" class="search-input" placeholder="Rechercher villes, parcours..." oninput="filtrerParcours()">
   </div>
 
   <div class="controls">
@@ -105,34 +112,48 @@
   <div id="container-parcours"></div>
 
   <script>
-    const parcoursData = [
-      { id: 1, titre: "Promenade des Marchaux", lieu: "Châtelet, Hainaut", dur: "2h 34min", dist: "10,6 km", img: "https://picsum.photos/400/200?random=1" },
-      { id: 2, titre: "Sentier de l'Ourthe", lieu: "Province de Liège", dur: "1h 45min", dist: "7,2 km", img: "https://picsum.photos/400/200?random=2" },
-      { id: 3, titre: "Cap Gris-Nez", lieu: "Audinghen, France", dur: "33min", dist: "2,3 km", img: "https://picsum.photos/400/200?random=3" }
+    // Liste des parcours
+    let parcoursData = [
+      { id: 1, titre: "Promenade des Marchaux", lieu: "Châtelet, Hainaut", dur: "2h 34min", dist: "10,6 km" },
+      { id: 2, titre: "Sentier de l'Ourthe", lieu: "Province de Liège", dur: "1h 45min", dist: "7,2 km" },
+      { id: 3, titre: "Cap Gris-Nez", lieu: "Audinghen, France", dur: "33min", dist: "2,3 km" }
     ];
 
-    function afficherParcours() {
+    function afficherParcours(liste) {
       const container = document.getElementById('container-parcours');
       container.innerHTML = '';
-      parcoursData.forEach(item => {
+
+      if (liste.length === 0) {
+        container.innerHTML = '<div class="no-result">Aucun parcours ne correspond à votre recherche.</div>';
+        return;
+      }
+
+      liste.forEach(item => {
         container.innerHTML += `
           <div class="route-card">
-            <div class="card-image" style="background-image: url('${item.img}')"></div>
-            <div class="card-content">
-              <div class="card-title">${item.titre}</div>
-              <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
-            </div>
+            <div class="card-title">${item.titre}</div>
+            <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
           </div>
         `;
       });
     }
 
-    function permuterParcours() {
-      parcoursData.push(parcoursData.shift()); // Décale le premier élément à la fin
-      afficherParcours();
+    function filtrerParcours() {
+      const recherche = document.getElementById('search-input').value.toLowerCase();
+      const resultats = parcoursData.filter(item => 
+        item.titre.toLowerCase().includes(recherche) || 
+        item.lieu.toLowerCase().includes(recherche)
+      );
+      afficherParcours(resultats);
     }
 
-    afficherParcours();
+    function permuterParcours() {
+      parcoursData.push(parcoursData.shift()); // Décale le premier élément à la fin
+      filtrerParcours(); // Maintient la recherche active même après permutation
+    }
+
+    // Affichage initial au chargement
+    afficherParcours(parcoursData);
   </script>
 
 </body>

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -70,8 +71,6 @@
       padding: 16px;
       margin-bottom: 15px;
       border: 1px solid #2a2a2a;
-      cursor: pointer;
-      text-decoration: none;
       display: block;
       color: inherit;
       transition: border-color 0.2s;
@@ -85,9 +84,30 @@
       margin: 0 0 6px 0;
       color: #ffffff;
     }
+    .card-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 10px 0;
+      border: 1px solid #333;
+    }
     .card-details {
       color: #aaa;
       font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    .btn-gps {
+      display: block;
+      text-align: center;
+      background-color: #d4af37;
+      color: #000;
+      text-decoration: none;
+      padding: 10px 0;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-top: 10px;
     }
     .no-result {
       text-align: center;
@@ -144,10 +164,12 @@
 
       liste.forEach(item => {
         container.innerHTML += `
-          <a href="${item.fichier}" class="route-card">
+          <div class="route-card">
             <div class="card-title">${item.titre}</div>
+            ${item.image ? `<img src="${item.image}" class="card-img" alt="Vieille carte">` : ''}
             <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
-          </a>
+            ${item.gps ? `<a href="${item.gps}" target="_blank" class="btn-gps">📍 Me rendre à la balade</a>` : ''}
+          </div>
         `;
       });
     }

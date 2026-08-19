@@ -117,16 +117,21 @@
   <script>
     let parcoursData = [];
 
-    // Chargement automatique des parcours depuis le fichier externe
-    fetch('parcours.json')
-      .then(response => response.json())
-      .then(data => {
-        parcoursData = data;
-        afficherParcours(parcoursData);
-      })
-      .catch(error => {
-        console.error("Erreur de chargement des parcours :", error);
-      });
+    // Génération automatique des noms de fichiers de parcours-1.json à parcours-60.json
+    const listeFichiers = Array.from({ length: 60 }, (_, i) => `parcours-${i + 1}.json`);
+
+    // Chargement dynamique de chaque fichier individuel s'il existe
+    Promise.all(
+      listeFichiers.map(fichier => 
+        fetch(fichier)
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null)
+      )
+    ).then(resultats => {
+      // Filtrer pour garder uniquement les parcours réellement créés
+      parcoursData = resultats.filter(item => item !== null);
+      afficherParcours(parcoursData);
+    });
 
     function afficherParcours(liste) {
       const container = document.getElementById('container-parcours');

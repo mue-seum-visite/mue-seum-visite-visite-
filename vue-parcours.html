@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Découverte du parcours - MUE.SÉUM</title>
   <!-- Feuilles de style pour la carte Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -91,7 +91,7 @@
     }
     .btn-close-ar {
       position: absolute;
-      top: 20px;
+      top: calc(20px + env(safe-area-inset-top));
       right: 20px;
       background: rgba(0,0,0,0.8);
       color: #fff;
@@ -103,26 +103,28 @@
       cursor: pointer;
     }
 
-    /* Contrôles de capture superposés au-dessus de l'expérience */
+    /* MODIFICATION : Positionnement au-dessus de la banderole du smartphone */
     .ar-controls {
       position: absolute;
-      bottom: 30px;
+      bottom: calc(70px + env(safe-area-inset-bottom)); /* Remonté pour dégager la zone du bas */
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 15px;
       z-index: 10000;
+      width: 90%;
+      justify-content: center;
     }
     .btn-capture {
       background-color: #d4af37;
       color: #000;
       border: 2px solid #fff;
-      padding: 12px 20px;
+      padding: 14px 22px;
       border-radius: 30px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
     }
   </style>
 </head>
@@ -142,7 +144,7 @@
     <video id="camera-feed" autoplay playsinline muted></video>
     <video id="video-overlay" autoplay loop muted playsinline></video>
 
-    <!-- Boutons d'interaction directes sur l'animation -->
+    <!-- Boutons d'interaction remontés au-dessus de la barre système -->
     <div class="ar-controls">
       <button class="btn-capture" onclick="prendrePhotoCombiner()">📸 Capturer Photo</button>
       <button class="btn-capture" id="btn-record" onclick="toggleEnregistrementCombiner()">🔴 Filmer la scène</button>
@@ -235,19 +237,17 @@
       arOverlay.style.display = 'none';
     }
 
-    // Dessine en permanence le flux Caméra + l'Animation superposée sur un Canvas
     function dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay) {
       canvas.width = cameraFeed.videoWidth || window.innerWidth;
       canvas.height = cameraFeed.videoHeight || window.innerHeight;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 0.7; // Transparence de l'animation
+      ctx.globalAlpha = 0.7;
       ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
       ctx.globalAlpha = 1.0;
     }
 
-    // Capture d'une photo combinée (Caméra + Animation)
     function prendrePhotoCombiner() {
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -263,7 +263,6 @@
       link.click();
     }
 
-    // Enregistrement d'une vidéo combinée (Caméra + Animation en direct)
     function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
       const cameraFeed = document.getElementById('camera-feed');
@@ -279,14 +278,13 @@
       } else {
         recordedChunks = [];
         
-        // Boucle de rendu pour la capture vidéo
         function retenirImage() {
           dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
           renderAnimationId = requestAnimationFrame(retenirImage);
         }
         retenirImage();
 
-        const canvasStream = canvas.captureStream(30); // Capture à 30 images/sec
+        const canvasStream = canvas.captureStream(30);
         mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
 
         mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };

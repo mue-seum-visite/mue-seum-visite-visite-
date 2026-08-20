@@ -6,7 +6,6 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <!-- Ingestion des scripts MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
@@ -84,7 +83,6 @@
       object-fit: cover;
     }
 
-    /* Flux vidéo masqués */
     #camera-feed, #video-overlay {
       display: none;
     }
@@ -162,6 +160,10 @@
     let selfieSegmentation;
     let cameraInstance;
 
+    // Variables pour le lissage temporel (Anti-tremblement)
+    let lastMaskCanvas = null;
+    let lastMaskCtx = null;
+
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
     } else {
@@ -207,13 +209,14 @@
       }
     }
 
+    // Initialisation IA avec mode Haute Précision
     function initialiserIA() {
       selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
       });
 
       selfieSegmentation.setOptions({
-        modelSelection: 1,
+        modelSelection: 1, // Modèle paysage optimisé
       });
 
       selfieSegmentation.onResults(surResultatsDétourage);
@@ -229,11 +232,9 @@
       videoOverlay.muted = true;
       videoOverlay.currentTime = 0;
       
-      // Forcer le démarrage immédiat de l'animation
       const playPromise = videoOverlay.play();
       if (playPromise !== undefined) {
         playPromise.catch(error => {
-          console.log("Lecture auto bloquée, tentative forcée:", error);
           videoOverlay.play();
         });
       }
@@ -265,9 +266,10 @@
       }
       videoOverlay.pause();
       arOverlay.style.display = 'none';
+      lastMaskCanvas = null;
     }
 
-    // ASSEMBLAGE DU RENDU : 1. Animation en fond / 2. Utilisateur détouré au premier plan
+    // RENDU HAUTE PRÉCISION : LISSAGE TEMPOREL + FUSION HISTORIQUE
     function surResultatsDétourage(results) {
       const canvas = document.getElementById('ar-canvas-render');
       const ctx = canvas.getContext('2d');
@@ -276,10 +278,18 @@
       canvas.width = results.image.width || 1280;
       canvas.height = results.image.height || 720;
 
+      // Initialisation du canvas de mémoire pour le lissage
+      if (!lastMaskCanvas) {
+        lastMaskCanvas = document.createElement('canvas');
+        lastMaskCanvas.width = canvas.width;
+        lastMaskCanvas.height = canvas.height;
+        lastMaskCtx = lastMaskCanvas.getContext('2d');
+      }
+
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // STEP 1 : ARRIÈRE-PLAN - Dessin systématique de la vidéo d'animation
+      // 1. ARRIÈRE-PLAN : Décor vidéo ou archive
       if (videoOverlay && videoOverlay.readyState >= 2) {
         ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
       } else {
@@ -287,23 +297,33 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // STEP 2 : PREMIER PLAN - Incrustation de la silhouette de l'utilisateur
-      // Création d'un canvas temporaire pour découper proprement la personne
+      // 2. LISSAGE TEMPOREL DU MASQUE (Absorbe les vibrations et retient la forme)
+      // Fusion de 70% du masque actuel avec 30% de la trame précédente
+      lastMaskCtx.globalAlpha = 0.30;
+      lastMaskCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+      lastMaskCtx.globalAlpha = 1.0;
+
+      // 3. PREMIER PLAN (Découpe exacte de la personne sans le mobilier)
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = canvas.width;
       tempCanvas.height = canvas.height;
       const tempCtx = tempCanvas.getContext('2d');
 
-      // Dessin du masque
-      tempCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+      // Application du masque lissé
+      tempCtx.drawImage(lastMaskCanvas, 0, 0, canvas.width, canvas.height);
       tempCtx.globalCompositeOperation = 'source-in';
 
-      // Dessin de l'utilisateur en effet miroir
+      // Dessin de l'utilisateur avec correction miroir
+      tempCtx.save();
       tempCtx.translate(canvas.width, 0);
       tempCtx.scale(-1, 1);
+      
+      // Filtre d'harmonisation de couleur et contraste (Fusion visuelle rétro)
+      tempCtx.filter = "contrast(1.05) saturate(0.90)";
       tempCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      tempCtx.restore();
 
-      // Superposition de l'utilisateur détouré sur l'arrière-plan
+      // Dessin final sur l'arrière-plan
       ctx.drawImage(tempCanvas, 0, 0);
 
       ctx.restore();

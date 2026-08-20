@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Découverte du parcours - MUE.SÉUM</title>
-  <!-- Feuilles de style pour la carte Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body {
@@ -48,7 +47,6 @@
       width: 100%;
     }
 
-    /* Styles indispensables pour l'affichage Caméra + Vidéo Plein Écran */
     .popup-content {
       text-align: center;
       color: #000;
@@ -103,28 +101,30 @@
       cursor: pointer;
     }
 
-    /* MODIFICATION : Positionnement au-dessus de la banderole du smartphone */
+    /* RECTIFICATION ERGONOMIE : Remonté au-dessus de la banderole du GSM */
     .ar-controls {
       position: absolute;
-      bottom: calc(70px + env(safe-area-inset-bottom)); /* Remonté pour dégager la zone du bas */
+      bottom: calc(100px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 15px;
+      gap: 12px;
       z-index: 10000;
-      width: 90%;
-      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 18px;
+      border-radius: 40px;
+      backdrop-filter: blur(8px);
     }
     .btn-capture {
       background-color: #d4af37;
       color: #000;
-      border: 2px solid #fff;
-      padding: 14px 22px;
-      border-radius: 30px;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 25px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
   </style>
 </head>
@@ -137,24 +137,20 @@
 
   <div id="map"></div>
 
-  <!-- Conteneur plein écran : Caméra du GSM + Animation vidéo transparente -->
   <div id="ar-overlay">
     <button class="btn-close-ar" onclick="fermerCamera()">❌ Fermer</button>
     
     <video id="camera-feed" autoplay playsinline muted></video>
     <video id="video-overlay" autoplay loop muted playsinline></video>
 
-    <!-- Boutons d'interaction remontés au-dessus de la barre système -->
     <div class="ar-controls">
       <button class="btn-capture" onclick="prendrePhotoCombiner()">📸 Capturer Photo</button>
       <button class="btn-capture" id="btn-record" onclick="toggleEnregistrementCombiner()">🔴 Filmer la scène</button>
     </div>
   </div>
 
-  <!-- Canvas invisible utilisé pour fusionner Caméra + Animation -->
   <canvas id="ar-canvas" style="display:none;"></canvas>
 
-  <!-- Script Leaflet pour générer la carte -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -248,7 +244,8 @@
       ctx.globalAlpha = 1.0;
     }
 
-    function prendrePhotoCombiner() {
+    // Capture photo proposant directement "Enregistrer dans la galerie Photos" via le menu natif du GSM
+    async function prendrePhotoCombiner() {
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
       const canvas = document.getElementById('ar-canvas');
@@ -256,11 +253,29 @@
 
       dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
 
-      const imageURL = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = imageURL;
-      link.download = `mueseum-souvenir-${Date.now()}.png`;
-      link.click();
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], `mueseum-photo-${Date.now()}.png`, { type: 'image/png' });
+
+        // Utilise la fonction de partage du smartphone si disponible
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Mon souvenir MUE.SÉUM',
+              text: 'Voici ma capture en réalité augmentée !'
+            });
+          } catch (err) {
+            console.log("Partage annulé");
+          }
+        } else {
+          // Alternative de téléchargement standard
+          const imageURL = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = imageURL;
+          link.download = `mueseum-photo.png`;
+          link.click();
+        }
+      }, 'image/png');
     }
 
     function toggleEnregistrementCombiner() {
@@ -288,13 +303,26 @@
         mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
 
         mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = async () => {
           const blob = new Blob(recordedChunks, { type: "video/webm" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `mueseum-video-${Date.now()}.webm`;
-          a.click();
+          const file = new File([blob], `mueseum-video-${Date.now()}.webm`, { type: 'video/webm' });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'Vidéo MUE.SÉUM'
+              });
+            } catch (err) {
+              console.log("Partage annulé");
+            }
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `mueseum-video.webm`;
+            a.click();
+          }
         };
 
         mediaRecorder.start();

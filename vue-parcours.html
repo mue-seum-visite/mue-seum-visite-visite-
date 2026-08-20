@@ -72,11 +72,16 @@
       background: #000;
       z-index: 9999;
     }
+    
+    /* CAMÉRA NETTE : Effet miroir & 100% de luminosité */
     #camera-feed {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transform: scaleX(-1); /* Mode miroir selfie */
     }
+
+    /* ANIMATION CADRE : Intégration en mode écran sans voiler la personne */
     #video-overlay {
       position: absolute;
       top: 0;
@@ -84,9 +89,10 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.7;
+      mix-blend-mode: screen; /* Fusionne les noirs et garde les éléments clairs */
       pointer-events: none;
     }
+
     .btn-close-ar {
       position: absolute;
       top: calc(20px + env(safe-area-inset-top));
@@ -101,7 +107,6 @@
       cursor: pointer;
     }
 
-    /* RECTIFICATION ERGONOMIE : Remonté au-dessus de la banderole du GSM */
     .ar-controls {
       position: absolute;
       bottom: calc(100px + env(safe-area-inset-bottom));
@@ -212,13 +217,19 @@
 
       videoOverlay.src = videoUrl;
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      // Active la caméra selfie (user) pour que l'utilisateur soit l'acteur central
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
         .then(stream => {
           cameraFeed.srcObject = stream;
           arOverlay.style.display = 'block';
         })
         .catch(err => {
-          alert("Erreur d'accès à la caméra : " + err);
+          // Secours caméra arrière si frontale non disponible
+          navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+              cameraFeed.srcObject = stream;
+              arOverlay.style.display = 'block';
+            });
         });
     }
 
@@ -238,13 +249,20 @@
       canvas.height = cameraFeed.videoHeight || window.innerHeight;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Dessine la personne à 100% de luminosité en mode miroir
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
       ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 0.7;
+      ctx.restore();
+
+      // Incruste l'animation par-dessus
+      ctx.globalCompositeOperation = "screen";
       ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 1.0;
+      ctx.globalCompositeOperation = "source-over";
     }
 
-    // Capture photo proposant directement "Enregistrer dans la galerie Photos" via le menu natif du GSM
     async function prendrePhotoCombiner() {
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -256,7 +274,6 @@
       canvas.toBlob(async (blob) => {
         const file = new File([blob], `mueseum-photo-${Date.now()}.png`, { type: 'image/png' });
 
-        // Utilise la fonction de partage du smartphone si disponible
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -268,7 +285,6 @@
             console.log("Partage annulé");
           }
         } else {
-          // Alternative de téléchargement standard
           const imageURL = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = imageURL;

@@ -46,6 +46,34 @@
       flex: 1;
       width: 100%;
     }
+    /* Styles ajoutés pour la vidéo transparente et le bouton caméra */
+    .popup-content {
+      text-align: center;
+      color: #000;
+    }
+    .video-overlay {
+      width: 100%;
+      max-width: 240px;
+      border-radius: 8px;
+      opacity: 0.85;
+      margin: 8px 0;
+    }
+    .btn-camera {
+      display: inline-block;
+      background-color: #d4af37;
+      color: #000;
+      padding: 8px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.85rem;
+      margin-top: 5px;
+      cursor: pointer;
+      border: none;
+    }
+    #camera-input {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -56,6 +84,9 @@
   </div>
 
   <div id="map"></div>
+
+  <!-- Champ invisible pour ouvrir l'appareil photo/caméra du téléphone -->
+  <input type="file" id="camera-input" accept="image/*,video/*" capture="environment">
 
   <!-- Script Leaflet pour générer la carte -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -79,6 +110,10 @@
         });
     }
 
+    function ouvrirCamera() {
+      document.getElementById('camera-input').click();
+    }
+
     function initialiserCarte(points) {
       if (!points || points.length === 0) return;
 
@@ -95,8 +130,17 @@
 
       // Place les repères spécifiques au JSON chargé
       points.forEach(pt => {
+        let contenuPopup = `<div class="popup-content"><b>${pt.nom}</b><br>`;
+        
+        if (pt.video) {
+          contenuPopup += `<video class="video-overlay" controls autoplay loop muted playsinline src="${pt.video}"></video><br>`;
+        }
+        
+        contenuPopup += `<button class="btn-camera" onclick="ouvrirCamera()">📸 Photo / Vidéo</button></div>`;
+
         L.marker([pt.lat, pt.lng]).addTo(map)
-          .bindPopup(`<b>${pt.nom}</b>`);
+          .bindPopup(contenuPopup);
+        
         coordonnees.push([pt.lat, pt.lng]);
       });
 

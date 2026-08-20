@@ -85,7 +85,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover; /* MODIFICATION : prend l'entièreté de l'écran du GSM */
+      object-fit: cover;
       opacity: 0.7;
       pointer-events: none;
     }
@@ -103,27 +103,7 @@
       cursor: pointer;
     }
 
-    /* AJOUT : Petit encadré "Capturer l'instant" en haut à gauche */
-    .btn-selfie-box {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.85);
-      border: 1px solid #d4af37;
-      color: #ffffff;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      z-index: 10000;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    }
-
-    /* AJOUT : Contrôles de capture superposés */
+    /* Contrôles de capture superposés au-dessus de l'expérience */
     .ar-controls {
       position: absolute;
       bottom: 30px;
@@ -157,41 +137,34 @@
 
   <!-- Conteneur plein écran : Caméra du GSM + Animation vidéo transparente -->
   <div id="ar-overlay">
-    <!-- AJOUT : Le petit encadré "Capturer l'instant" -->
-    <button class="btn-selfie-box" onclick="activerCameraNative()">🤳 Capturer l'instant</button>
     <button class="btn-close-ar" onclick="fermerCamera()">❌ Fermer</button>
     
     <video id="camera-feed" autoplay playsinline muted></video>
     <video id="video-overlay" autoplay loop muted playsinline></video>
 
-    <!-- AJOUT : Boutons Photo et Filmer pendant l'expérience -->
+    <!-- Boutons d'interaction directes sur l'animation -->
     <div class="ar-controls">
-      <button class="btn-capture" onclick="prendrePhoto()">📸 Photo</button>
-      <button class="btn-capture" id="btn-record" onclick="toggleVideo()">🔴 Filmer</button>
+      <button class="btn-capture" onclick="prendrePhotoCombiner()">📸 Capturer Photo</button>
+      <button class="btn-capture" id="btn-record" onclick="toggleEnregistrementCombiner()">🔴 Filmer la scène</button>
     </div>
   </div>
 
-  <!-- AJOUT : Déclencheur invisible pour ouvrir l'appareil photo/caméra du GSM -->
-  <input type="file" id="native-camera-input" accept="image/*,video/*" capture="user" style="display:none;">
-
-  <!-- AJOUT : Canvas invisible servant de support pour la capture de photo -->
-  <canvas id="capture-canvas" style="display:none;"></canvas>
+  <!-- Canvas invisible utilisé pour fusionner Caméra + Animation -->
+  <canvas id="ar-canvas" style="display:none;"></canvas>
 
   <!-- Script Leaflet pour générer la carte -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Récupère l'ID transmis dans l'URL (ex: ?id=1 ou ?id=36)
     const urlParams = new URLSearchParams(window.location.search);
     const parcoursId = urlParams.get('id');
 
-    // AJOUT : Variables globales pour l'enregistrement vidéo
     let mediaRecorder;
     let recordedChunks = [];
+    let renderAnimationId;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
     } else {
-      // Lit automatiquement le JSON correspondant sans coder de lieu en dur
       fetch(`parcours-${parcoursId}.json`)
         .then(res => res.json())
         .then(data => {
@@ -206,10 +179,8 @@
     function initialiserCarte(points) {
       if (!points || points.length === 0) return;
 
-      // Centre initialement la carte sur le 1er point
       const map = L.map('map').setView([points[0].lat, points[0].lng], 14);
 
-      // Fond de carte sombre gratuit
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
@@ -217,7 +188,6 @@
 
       const coordonnees = [];
 
-      // Place les repères spécifiques au JSON chargé
       points.forEach(pt => {
         const titreAnim = pt.titre_animation || pt.nom;
         const contenuPopup = `
@@ -228,18 +198,15 @@
           </div>
         `;
 
-        L.marker([pt.lat, pt.lng]).addTo(map)
-          .bindPopup(contenuPopup);
+        L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
         coordonnees.push([pt.lat, pt.lng]);
       });
 
-      // Cadre la carte pour afficher tous les points du parcours
       if (coordonnees.length > 1) {
         map.fitBounds(coordonnees, { padding: [30, 30] });
       }
     }
 
-    // Activer la caméra arrière du smartphone et afficher la vidéo transparente en superposition
     function lancerExperience(videoUrl) {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
@@ -247,7 +214,7 @@
 
       videoOverlay.src = videoUrl;
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
         .then(stream => {
           cameraFeed.srcObject = stream;
           arOverlay.style.display = 'block';
@@ -264,56 +231,71 @@
       if (cameraFeed.srcObject) {
         cameraFeed.srcObject.getTracks().forEach(track => track.stop());
       }
+      if (renderAnimationId) cancelAnimationFrame(renderAnimationId);
       arOverlay.style.display = 'none';
     }
 
-    // AJOUT : Ouvre directement l'appareil photo/caméra natif du téléphone
-    function activerCameraNative() {
-      document.getElementById('native-camera-input').click();
-    }
-
-    // AJOUT : Capture de photo assemblée en direct
-    function prendrePhoto() {
-      const cameraFeed = document.getElementById('camera-feed');
-      const videoOverlay = document.getElementById('video-overlay');
-      const canvas = document.getElementById('capture-canvas');
-      const ctx = canvas.getContext('2d');
-
+    // Dessine en permanence le flux Caméra + l'Animation superposée sur un Canvas
+    function dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay) {
       canvas.width = cameraFeed.videoWidth || window.innerWidth;
       canvas.height = cameraFeed.videoHeight || window.innerHeight;
 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 0.7;
+      ctx.globalAlpha = 0.7; // Transparence de l'animation
       ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Capture d'une photo combinée (Caméra + Animation)
+    function prendrePhotoCombiner() {
+      const cameraFeed = document.getElementById('camera-feed');
+      const videoOverlay = document.getElementById('video-overlay');
+      const canvas = document.getElementById('ar-canvas');
+      const ctx = canvas.getContext('2d');
+
+      dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
 
       const imageURL = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = imageURL;
-      link.download = `mueseum-photo.png`;
+      link.download = `mueseum-souvenir-${Date.now()}.png`;
       link.click();
     }
 
-    // AJOUT : Capture d'enregistrement vidéo
-    function toggleVideo() {
+    // Enregistrement d'une vidéo combinée (Caméra + Animation en direct)
+    function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
       const cameraFeed = document.getElementById('camera-feed');
+      const videoOverlay = document.getElementById('video-overlay');
+      const canvas = document.getElementById('ar-canvas');
+      const ctx = canvas.getContext('2d');
 
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
-        btnRecord.textContent = "🔴 Filmer";
+        cancelAnimationFrame(renderAnimationId);
+        btnRecord.textContent = "🔴 Filmer la scène";
         btnRecord.style.backgroundColor = "#d4af37";
       } else {
         recordedChunks = [];
-        const stream = cameraFeed.srcObject;
-        mediaRecorder = new MediaRecorder(stream);
+        
+        // Boucle de rendu pour la capture vidéo
+        function retenirImage() {
+          dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
+          renderAnimationId = requestAnimationFrame(retenirImage);
+        }
+        retenirImage();
+
+        const canvasStream = canvas.captureStream(30); // Capture à 30 images/sec
+        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
 
         mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
         mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: "video/mp4" });
+          const blob = new Blob(recordedChunks, { type: "video/webm" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `mueseum-video.mp4`;
+          a.download = `mueseum-video-${Date.now()}.webm`;
           a.click();
         };
 

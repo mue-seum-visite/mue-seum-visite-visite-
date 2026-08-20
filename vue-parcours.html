@@ -103,7 +103,27 @@
       cursor: pointer;
     }
 
-    /* AJOUT : Contrôles de capture superposés */
+    /* AJOUT : Petit encadré "Capturer l'instant" en haut à gauche */
+    .btn-selfie-box {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #d4af37;
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      z-index: 10000;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* AJOUT : Contrôles de capture superposés */
     .ar-controls {
       position: absolute;
       bottom: 30px;
@@ -137,7 +157,10 @@
 
   <!-- Conteneur plein écran : Caméra du GSM + Animation vidéo transparente -->
   <div id="ar-overlay">
+    <!-- AJOUT : Le petit encadré "Capturer l'instant" -->
+    <button class="btn-selfie-box" onclick="activerCameraNative()">🤳 Capturer l'instant</button>
     <button class="btn-close-ar" onclick="fermerCamera()">❌ Fermer</button>
+    
     <video id="camera-feed" autoplay playsinline muted></video>
     <video id="video-overlay" autoplay loop muted playsinline></video>
 
@@ -147,6 +170,9 @@
       <button class="btn-capture" id="btn-record" onclick="toggleVideo()">🔴 Filmer</button>
     </div>
   </div>
+
+  <!-- AJOUT : Déclencheur invisible pour ouvrir l'appareil photo/caméra du GSM -->
+  <input type="file" id="native-camera-input" accept="image/*,video/*" capture="user" style="display:none;">
 
   <!-- AJOUT : Canvas invisible servant de support pour la capture de photo -->
   <canvas id="capture-canvas" style="display:none;"></canvas>
@@ -239,6 +265,11 @@
         cameraFeed.srcObject.getTracks().forEach(track => track.stop());
       }
       arOverlay.style.display = 'none';
+    }
+
+    // AJOUT : Ouvre directement l'appareil photo/caméra natif du téléphone
+    function activerCameraNative() {
+      document.getElementById('native-camera-input').click();
     }
 
     // AJOUT : Capture de photo assemblée en direct

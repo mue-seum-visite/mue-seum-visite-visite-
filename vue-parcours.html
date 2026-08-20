@@ -73,15 +73,15 @@
       z-index: 9999;
     }
     
-    /* CAMÉRA NETTE : Effet miroir & 100% de luminosité */
+    /* CAMÉRA SELFIE NETTE (effet miroir) */
     #camera-feed {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Mode miroir selfie */
+      transform: scaleX(-1);
     }
 
-    /* ANIMATION CADRE : Intégration en mode écran sans voiler la personne */
+    /* ANIMATION : Restitution fidèle des détails sans mode screen délavé */
     #video-overlay {
       position: absolute;
       top: 0;
@@ -89,7 +89,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      mix-blend-mode: screen; /* Fusionne les noirs et garde les éléments clairs */
+      opacity: 0.9;
       pointer-events: none;
     }
 
@@ -115,7 +115,7 @@
       display: flex;
       gap: 12px;
       z-index: 10000;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.65);
       padding: 10px 18px;
       border-radius: 40px;
       backdrop-filter: blur(8px);
@@ -217,13 +217,13 @@
 
       videoOverlay.src = videoUrl;
 
-      // Active la caméra selfie (user) pour que l'utilisateur soit l'acteur central
+      // Active la caméra selfie (user)
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
         .then(stream => {
           cameraFeed.srcObject = stream;
           arOverlay.style.display = 'block';
         })
-        .catch(err => {
+        .catch(() => {
           // Secours caméra arrière si frontale non disponible
           navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             .then(stream => {
@@ -244,35 +244,48 @@
       arOverlay.style.display = 'none';
     }
 
-    function dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay) {
+    // Fonction de rendu garantissant le calque Caméra + Calque Animation avec détails intacts
+    async function dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay) {
       canvas.width = cameraFeed.videoWidth || window.innerWidth;
       canvas.height = cameraFeed.videoHeight || window.innerHeight;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Dessine la personne à 100% de luminosité en mode miroir
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
 
-      // Incruste l'animation par-dessus
-      ctx.globalCompositeOperation = "screen";
+      // Capture de l'image de la caméra en évitant les calques vides
+      try {
+        const frame = await createImageBitmap(cameraFeed);
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1); // Effet miroir selfie
+        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } catch (e) {
+        // Mode de secours direct si createImageBitmap n'est pas supporté
+        ctx.save();
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      // Incrustation nette de l'animation vidéo par-dessus
+      ctx.globalAlpha = 0.88;
       ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1.0;
     }
 
+    // Capture Photo
     async function prendrePhotoCombiner() {
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
       const canvas = document.getElementById('ar-canvas');
       const ctx = canvas.getContext('2d');
 
-      dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
+      await dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay);
 
       canvas.toBlob(async (blob) => {
-        const file = new File([blob], `mueseum-photo-${Date.now()}.png`, { type: 'image/png' });
+        if (!blob) return;
+        const file = new File([blob], `mueseum-souvenir-${Date.now()}.png`, { type: 'image/png' });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
@@ -288,13 +301,29 @@
           const imageURL = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = imageURL;
-          link.download = `mueseum-photo.png`;
+          link.download = `mueseum-souvenir.png`;
           link.click();
         }
       }, 'image/png');
     }
 
-    function toggleEnregistrementCombiner() {
+    // Détection dynamique des codecs vidéo supportés par le téléphone (iOS / Android)
+    function obtenirMimeTypeVideo() {
+      const types = [
+        'video/mp4;codecs=avc1',
+        'video/mp4',
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      for (let t of types) {
+        if (MediaRecorder.isTypeSupported(t)) return t;
+      }
+      return '';
+    }
+
+    // Enregistrement Vidéo
+    async function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -308,20 +337,30 @@
         btnRecord.style.backgroundColor = "#d4af37";
       } else {
         recordedChunks = [];
-        
-        function retenirImage() {
-          dessinerSuperposition(canvas, ctx, cameraFeed, videoOverlay);
+
+        // Boucle de rendu fluide
+        async function retenirImage() {
+          await dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay);
           renderAnimationId = requestAnimationFrame(retenirImage);
         }
-        retenirImage();
+        await retenirImage();
 
-        const canvasStream = canvas.captureStream(30);
-        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+        const mimeType = obtenirMimeTypeVideo();
+        const canvasStream = canvas.captureStream(25); // 25 images/sec
 
-        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        try {
+          mediaRecorder = mimeType ? new MediaRecorder(canvasStream, { mimeType }) : new MediaRecorder(canvasStream);
+        } catch (e) {
+          mediaRecorder = new MediaRecorder(canvasStream);
+        }
+
+        mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
         mediaRecorder.onstop = async () => {
-          const blob = new Blob(recordedChunks, { type: "video/webm" });
-          const file = new File([blob], `mueseum-video-${Date.now()}.webm`, { type: 'video/webm' });
+          const formatExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const typeMimeFinal = mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+
+          const blob = new Blob(recordedChunks, { type: typeMimeFinal });
+          const file = new File([blob], `mueseum-video-${Date.now()}.${formatExtension}`, { type: typeMimeFinal });
 
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
@@ -336,7 +375,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `mueseum-video.webm`;
+            a.download = `mueseum-video.${formatExtension}`;
             a.click();
           }
         };

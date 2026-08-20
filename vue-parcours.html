@@ -16,6 +16,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      overflow: hidden;
     }
     .header {
       padding: 15px;
@@ -46,33 +47,60 @@
       flex: 1;
       width: 100%;
     }
-    /* Styles ajoutés pour la vidéo transparente et le bouton caméra */
+
+    /* Styles indispensables pour l'affichage Caméra + Vidéo Plein Écran */
     .popup-content {
       text-align: center;
       color: #000;
+      padding: 4px;
     }
-    .video-overlay {
-      width: 100%;
-      max-width: 240px;
-      border-radius: 8px;
-      opacity: 0.85;
-      margin: 8px 0;
-    }
-    .btn-camera {
-      display: inline-block;
+    .btn-ar {
       background-color: #d4af37;
       color: #000;
+      border: none;
       padding: 8px 14px;
       border-radius: 20px;
-      text-decoration: none;
       font-weight: bold;
-      font-size: 0.85rem;
-      margin-top: 5px;
       cursor: pointer;
-      border: none;
+      margin-top: 6px;
     }
-    #camera-input {
+    #ar-overlay {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999;
+    }
+    #camera-feed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .btn-close-ar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      border: 1px solid #d4af37;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      z-index: 10000;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -85,8 +113,12 @@
 
   <div id="map"></div>
 
-  <!-- Champ invisible pour ouvrir l'appareil photo/caméra du téléphone -->
-  <input type="file" id="camera-input" accept="image/*,video/*" capture="environment">
+  <!-- Conteneur plein écran : Caméra du GSM + Animation vidéo transparente -->
+  <div id="ar-overlay">
+    <button class="btn-close-ar" onclick="fermerCamera()">❌ Fermer</button>
+    <video id="camera-feed" autoplay playsinline muted></video>
+    <video id="video-overlay" autoplay loop muted playsinline></video>
+  </div>
 
   <!-- Script Leaflet pour générer la carte -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -110,10 +142,6 @@
         });
     }
 
-    function ouvrirCamera() {
-      document.getElementById('camera-input').click();
-    }
-
     function initialiserCarte(points) {
       if (!points || points.length === 0) return;
 
@@ -130,17 +158,17 @@
 
       // Place les repères spécifiques au JSON chargé
       points.forEach(pt => {
-        let contenuPopup = `<div class="popup-content"><b>${pt.nom}</b><br>`;
-        
-        if (pt.video) {
-          contenuPopup += `<video class="video-overlay" controls autoplay loop muted playsinline src="${pt.video}"></video><br>`;
-        }
-        
-        contenuPopup += `<button class="btn-camera" onclick="ouvrirCamera()">📸 Photo / Vidéo</button></div>`;
+        const titreAnim = pt.titre_animation || pt.nom;
+        const contenuPopup = `
+          <div class="popup-content">
+            <b>${pt.nom}</b><br>
+            <p style="margin: 4px 0; font-size: 0.85rem;">${titreAnim}</p>
+            <button class="btn-ar" onclick="lancerExperience('${pt.video}')">📸 Lancer l'expérience</button>
+          </div>
+        `;
 
         L.marker([pt.lat, pt.lng]).addTo(map)
           .bindPopup(contenuPopup);
-        
         coordonnees.push([pt.lat, pt.lng]);
       });
 
@@ -148,6 +176,34 @@
       if (coordonnees.length > 1) {
         map.fitBounds(coordonnees, { padding: [30, 30] });
       }
+    }
+
+    // Activer la caméra arrière du smartphone et afficher la vidéo transparente en superposition
+    function lancerExperience(videoUrl) {
+      const arOverlay = document.getElementById('ar-overlay');
+      const cameraFeed = document.getElementById('camera-feed');
+      const videoOverlay = document.getElementById('video-overlay');
+
+      videoOverlay.src = videoUrl;
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          cameraFeed.srcObject = stream;
+          arOverlay.style.display = 'block';
+        })
+        .catch(err => {
+          alert("Erreur d'accès à la caméra : " + err);
+        });
+    }
+
+    function fermerCamera() {
+      const arOverlay = document.getElementById('ar-overlay');
+      const cameraFeed = document.getElementById('camera-feed');
+      
+      if (cameraFeed.srcObject) {
+        cameraFeed.srcObject.getTracks().forEach(track => track.stop());
+      }
+      arOverlay.style.display = 'none';
     }
   </script>
 

@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Ingestion des scripts de détourage IA (MediaPipe Selfie Segmentation) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+
   <style>
     body {
       margin: 0;
@@ -73,24 +78,15 @@
       z-index: 9999;
     }
     
-    /* CAMÉRA SELFIE NETTE (effet miroir) */
-    #camera-feed {
+    #ar-canvas-render {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1);
     }
 
-    /* ANIMATION : Restitution fidèle des détails sans mode screen délavé */
-    #video-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.9;
-      pointer-events: none;
+    /* Flux vidéo invisibles servant de sources au moteur */
+    #camera-feed, #video-overlay {
+      display: none;
     }
 
     .btn-close-ar {
@@ -145,6 +141,8 @@
   <div id="ar-overlay">
     <button class="btn-close-ar" onclick="fermerCamera()">❌ Fermer</button>
     
+    <canvas id="ar-canvas-render"></canvas>
+
     <video id="camera-feed" autoplay playsinline muted></video>
     <video id="video-overlay" autoplay loop muted playsinline></video>
 
@@ -154,8 +152,6 @@
     </div>
   </div>
 
-  <canvas id="ar-canvas" style="display:none;"></canvas>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -163,7 +159,8 @@
 
     let mediaRecorder;
     let recordedChunks = [];
-    let renderAnimationId;
+    let selfieSegmentation;
+    let cameraInstance;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -210,80 +207,92 @@
       }
     }
 
+    // Initialisation du moteur d'IA pour le détourage
+    function initialiserIA() {
+      selfieSegmentation = new SelfieSegmentation({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+      });
+
+      selfieSegmentation.setOptions({
+        modelSelection: 1, // 1 = Modèle optimisé paysage / selfie
+      });
+
+      selfieSegmentation.onResults(surResultatsDétourage);
+    }
+    initialiserIA();
+
     function lancerExperience(videoUrl) {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
 
       videoOverlay.src = videoUrl;
+      videoOverlay.play();
 
-      // Active la caméra selfie (user)
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
-        .then(stream => {
-          cameraFeed.srcObject = stream;
-          arOverlay.style.display = 'block';
-        })
-        .catch(() => {
-          // Secours caméra arrière si frontale non disponible
-          navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-            .then(stream => {
-              cameraFeed.srcObject = stream;
-              arOverlay.style.display = 'block';
-            });
-        });
+      arOverlay.style.display = 'block';
+
+      // Lancement de la caméra avec traitement IA en temps réel
+      cameraInstance = new Camera(cameraFeed, {
+        onFrame: async () => {
+          await selfieSegmentation.send({ image: cameraFeed });
+        },
+        width: 1280,
+        height: 720,
+        facingMode: 'user'
+      });
+      cameraInstance.start();
     }
 
     function fermerCamera() {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
+      const videoOverlay = document.getElementById('video-overlay');
       
-      if (cameraFeed.srcObject) {
-        cameraFeed.srcObject.getTracks().forEach(track => track.stop());
+      if (cameraInstance) {
+        cameraInstance.stop();
       }
-      if (renderAnimationId) cancelAnimationFrame(renderAnimationId);
+      videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
 
-    // Fonction de rendu garantissant le calque Caméra + Calque Animation avec détails intacts
-    async function dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay) {
-      canvas.width = cameraFeed.videoWidth || window.innerWidth;
-      canvas.height = cameraFeed.videoHeight || window.innerHeight;
+    // CALCUL DU RENDU : Le décor (animation N&B) au fond, l'utilisateur détouré devant
+    function surResultatsDétourage(results) {
+      const canvas = document.getElementById('ar-canvas-render');
+      const ctx = canvas.getContext('2d');
+      const videoOverlay = document.getElementById('video-overlay');
 
+      canvas.width = results.image.width;
+      canvas.height = results.image.height;
+
+      ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Capture de l'image de la caméra en évitant les calques vides
-      try {
-        const frame = await createImageBitmap(cameraFeed);
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1); // Effet miroir selfie
-        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      } catch (e) {
-        // Mode de secours direct si createImageBitmap n'est pas supporté
-        ctx.save();
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
+      // 1. ARRIÈRE-PLAN : Dessin de l'animation N&B ou vidéo à 100% de sa qualité
+      if (videoOverlay.readyState === videoOverlay.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Incrustation nette de l'animation vidéo par-dessus
-      ctx.globalAlpha = 0.88;
-      ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 1.0;
+      // 2. MASQUE DE LA SILHOUETTE (Découpe de la personne)
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+
+      // 3. PREMIER PLAN : Dessin uniquement de l'utilisateur (effet miroir)
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      ctx.restore();
     }
 
-    // Capture Photo
-    async function prendrePhotoCombiner() {
-      const cameraFeed = document.getElementById('camera-feed');
-      const videoOverlay = document.getElementById('video-overlay');
-      const canvas = document.getElementById('ar-canvas');
-      const ctx = canvas.getContext('2d');
+    // CAPTURE PHOTO NATIVE
+    function prendrePhotoCombiner() {
+      const renderCanvas = document.getElementById('ar-canvas-render');
 
-      await dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay);
-
-      canvas.toBlob(async (blob) => {
+      renderCanvas.toBlob(async (blob) => {
         if (!blob) return;
         const file = new File([blob], `mueseum-souvenir-${Date.now()}.png`, { type: 'image/png' });
 
@@ -307,7 +316,6 @@
       }, 'image/png');
     }
 
-    // Détection dynamique des codecs vidéo supportés par le téléphone (iOS / Android)
     function obtenirMimeTypeVideo() {
       const types = [
         'video/mp4;codecs=avc1',
@@ -322,31 +330,19 @@
       return '';
     }
 
-    // Enregistrement Vidéo
-    async function toggleEnregistrementCombiner() {
+    // ENREGISTREMENT VIDÉO NATIVE
+    function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
-      const cameraFeed = document.getElementById('camera-feed');
-      const videoOverlay = document.getElementById('video-overlay');
-      const canvas = document.getElementById('ar-canvas');
-      const ctx = canvas.getContext('2d');
+      const renderCanvas = document.getElementById('ar-canvas-render');
 
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
-        cancelAnimationFrame(renderAnimationId);
         btnRecord.textContent = "🔴 Filmer la scène";
         btnRecord.style.backgroundColor = "#d4af37";
       } else {
         recordedChunks = [];
-
-        // Boucle de rendu fluide
-        async function retenirImage() {
-          await dessinerSuperpositionAsync(canvas, ctx, cameraFeed, videoOverlay);
-          renderAnimationId = requestAnimationFrame(retenirImage);
-        }
-        await retenirImage();
-
         const mimeType = obtenirMimeTypeVideo();
-        const canvasStream = canvas.captureStream(25); // 25 images/sec
+        const canvasStream = renderCanvas.captureStream(25);
 
         try {
           mediaRecorder = mimeType ? new MediaRecorder(canvasStream, { mimeType }) : new MediaRecorder(canvasStream);

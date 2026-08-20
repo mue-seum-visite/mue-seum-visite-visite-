@@ -8,19 +8,10 @@
   "gps": "https://www.google.com/maps/search/?api=1&query=50.4122,4.4447",
   "points": [
     {
-      "nom": "Étape 1 : Place Charles II",
-      "lat": 50.4108,
-      "lng": 4.4446
-    },
-    {
-      "nom": "Étape 2 : Parc Reine Astrid",
-      "lat": 50.4140,
-      "lng": 4.4480
-    },
-    {
-      "nom": "Étape 3 : Passage de la Bourse",
-      "lat": 50.4082,
-      "lng": 4.4425
+      "nom": "Square Jules Hiernaux",
+      "lat": 50.4177758,
+      "lng": 4.4506985,
+      "video": "screenrecording_08-20-2026 19-56-35_1.mov"
     }
   ]
 }

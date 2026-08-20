@@ -6,7 +6,7 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <!-- Ingestion des scripts de détourage IA (MediaPipe Selfie Segmentation) -->
+  <!-- Ingestion des scripts MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
@@ -84,7 +84,7 @@
       object-fit: cover;
     }
 
-    /* Flux vidéo invisibles servant de sources au moteur */
+    /* Flux vidéo masqués */
     #camera-feed, #video-overlay {
       display: none;
     }
@@ -144,7 +144,7 @@
     <canvas id="ar-canvas-render"></canvas>
 
     <video id="camera-feed" autoplay playsinline muted></video>
-    <video id="video-overlay" autoplay loop muted playsinline></video>
+    <video id="video-overlay" autoplay loop muted playsinline crossorigin="anonymous"></video>
 
     <div class="ar-controls">
       <button class="btn-capture" onclick="prendrePhotoCombiner()">📸 Capturer Photo</button>
@@ -207,14 +207,13 @@
       }
     }
 
-    // Initialisation du moteur d'IA pour le détourage
     function initialiserIA() {
       selfieSegmentation = new SelfieSegmentation({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
       });
 
       selfieSegmentation.setOptions({
-        modelSelection: 1, // 1 = Modèle optimisé paysage / selfie
+        modelSelection: 1,
       });
 
       selfieSegmentation.onResults(surResultatsDétourage);
@@ -227,11 +226,24 @@
       const videoOverlay = document.getElementById('video-overlay');
 
       videoOverlay.src = videoUrl;
-      videoOverlay.play();
+      videoOverlay.muted = true;
+      videoOverlay.currentTime = 0;
+      
+      // Forcer le démarrage immédiat de l'animation
+      const playPromise = videoOverlay.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Lecture auto bloquée, tentative forcée:", error);
+          videoOverlay.play();
+        });
+      }
 
       arOverlay.style.display = 'block';
 
-      // Lancement de la caméra avec traitement IA en temps réel
+      if (cameraInstance) {
+        cameraInstance.stop();
+      }
+
       cameraInstance = new Camera(cameraFeed, {
         onFrame: async () => {
           await selfieSegmentation.send({ image: cameraFeed });
@@ -255,40 +267,48 @@
       arOverlay.style.display = 'none';
     }
 
-    // CALCUL DU RENDU : Le décor (animation N&B) au fond, l'utilisateur détouré devant
+    // ASSEMBLAGE DU RENDU : 1. Animation en fond / 2. Utilisateur détouré au premier plan
     function surResultatsDétourage(results) {
       const canvas = document.getElementById('ar-canvas-render');
       const ctx = canvas.getContext('2d');
       const videoOverlay = document.getElementById('video-overlay');
 
-      canvas.width = results.image.width;
-      canvas.height = results.image.height;
+      canvas.width = results.image.width || 1280;
+      canvas.height = results.image.height || 720;
 
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. ARRIÈRE-PLAN : Dessin de l'animation N&B ou vidéo à 100% de sa qualité
-      if (videoOverlay.readyState === videoOverlay.HAVE_ENOUGH_DATA) {
+      // STEP 1 : ARRIÈRE-PLAN - Dessin systématique de la vidéo d'animation
+      if (videoOverlay && videoOverlay.readyState >= 2) {
         ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
       } else {
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = "#111111";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // 2. MASQUE DE LA SILHOUETTE (Découpe de la personne)
-      ctx.globalCompositeOperation = 'destination-over';
-      ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+      // STEP 2 : PREMIER PLAN - Incrustation de la silhouette de l'utilisateur
+      // Création d'un canvas temporaire pour découper proprement la personne
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
 
-      // 3. PREMIER PLAN : Dessin uniquement de l'utilisateur (effet miroir)
-      ctx.globalCompositeOperation = 'source-in';
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      // Dessin du masque
+      tempCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+      tempCtx.globalCompositeOperation = 'source-in';
+
+      // Dessin de l'utilisateur en effet miroir
+      tempCtx.translate(canvas.width, 0);
+      tempCtx.scale(-1, 1);
+      tempCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      // Superposition de l'utilisateur détouré sur l'arrière-plan
+      ctx.drawImage(tempCanvas, 0, 0);
 
       ctx.restore();
     }
 
-    // CAPTURE PHOTO NATIVE
     function prendrePhotoCombiner() {
       const renderCanvas = document.getElementById('ar-canvas-render');
 
@@ -330,7 +350,6 @@
       return '';
     }
 
-    // ENREGISTREMENT VIDÉO NATIVE
     function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
       const renderCanvas = document.getElementById('ar-canvas-render');

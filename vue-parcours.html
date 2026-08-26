@@ -211,7 +211,7 @@
       });
 
       selfieSegmentation.setOptions({
-        modelSelection: 1, // Modèle paysage plus détaillé
+        modelSelection: 1,
       });
 
       selfieSegmentation.onResults(surResultatsDétourage);
@@ -263,7 +263,7 @@
       arOverlay.style.display = 'none';
     }
 
-    // RENDU DIRECT ET TRANCHÉ (SANS MÉMOIRE, SANS FANTÔME)
+    // APPLICATION STRICTE DE LA FORMULE : output = personMask * cameraImage + (1 - personMask) * backgroundImage
     function surResultatsDétourage(results) {
       const canvas = document.getElementById('ar-canvas-render');
       const ctx = canvas.getContext('2d');
@@ -272,38 +272,65 @@
       canvas.width = results.image.width || 1280;
       canvas.height = results.image.height || 720;
 
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const width = canvas.width;
+      const height = canvas.height;
 
-      // STEP 1 : DESSIN DU FOND HISTORIQUE (Animation toujours présente et nette derrière)
+      // Canvas temporaire 1 : Image de la caméra (Miroir)
+      const camCanvas = document.createElement('canvas');
+      camCanvas.width = width; camCanvas.height = height;
+      const camCtx = camCanvas.getContext('2d');
+      camCtx.translate(width, 0);
+      camCtx.scale(-1, 1);
+      camCtx.drawImage(results.image, 0, 0, width, height);
+
+      // Canvas temporaire 2 : Masque de la personne
+      const maskCanvas = document.createElement('canvas');
+      maskCanvas.width = width; maskCanvas.height = height;
+      const maskCtx = maskCanvas.getContext('2d');
+      maskCtx.drawImage(results.segmentationMask, 0, 0, width, height);
+
+      // Canvas temporaire 3 : Fond d'animation
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = width; bgCanvas.height = height;
+      const bgCtx = bgCanvas.getContext('2d');
       if (videoOverlay && videoOverlay.readyState >= 2) {
-        ctx.drawImage(videoOverlay, 0, 0, canvas.width, canvas.height);
+        bgCtx.drawImage(videoOverlay, 0, 0, width, height);
       } else {
-        ctx.fillStyle = "#111111";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        bgCtx.fillStyle = "#111111";
+        bgCtx.fillRect(0, 0, width, height);
       }
 
-      // STEP 2 : PREMIER PLAN - ISOLEMENT DE LA SILHOUETTE
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = canvas.height;
-      const tempCtx = tempCanvas.getContext('2d');
+      // Extraction des buffers de pixels pour appliquer la formule
+      const imgCam = camCtx.getImageData(0, 0, width, height);
+      const imgMask = maskCtx.getImageData(0, 0, width, height);
+      const imgBg = bgCtx.getImageData(0, 0, width, height);
+      const imgOut = ctx.createImageData(width, height);
 
-      // Dessin du masque généré par l'IA
-      tempCtx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
-      
-      // Amélioration du tranchant des bords pour éviter les fuites du décors réel
-      tempCtx.globalCompositeOperation = 'source-in';
+      const dCam = imgCam.data;
+      const dMask = imgMask.data;
+      const dBg = imgBg.data;
+      const dOut = imgOut.data;
 
-      // Dessin de l'utilisateur (effet miroir)
-      tempCtx.translate(canvas.width, 0);
-      tempCtx.scale(-1, 1);
-      tempCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      const totalPixels = width * height * 4;
 
-      // Superposition propre du personnage sur l'arrière-plan
-      ctx.drawImage(tempCanvas, 0, 0);
+      // BOUCLE D'APPLICATION MATHEMATIQUE DE LA FORMULE
+      for (let i = 0; i < totalPixels; i += 4) {
+        // Normalisation du masque entre 0.0 et 1.0 (Binarisation nette à 0.5)
+        let maskVal = dMask[i] / 255.0;
+        let personMask = maskVal > 0.5 ? 1.0 : 0.0; 
 
-      ctx.restore();
+        // R = personMask * camera + (1 - personMask) * background
+        dOut[i]     = personMask * dCam[i]     + (1.0 - personMask) * dBg[i];
+        // G
+        dOut[i + 1] = personMask * dCam[i + 1] + (1.0 - personMask) * dBg[i + 1];
+        // B
+        dOut[i + 2] = personMask * dCam[i + 2] + (1.0 - personMask) * dBg[i + 2];
+        // Alpha (opacité)
+        dOut[i + 3] = 255;
+      }
+
+      // Injection du rendu final sans aucune fuite possible
+      ctx.putImageData(imgOut, 0, 0);
     }
 
     function prendrePhotoCombiner() {

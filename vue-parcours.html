@@ -6,7 +6,7 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Chargement de MediaPipe Selfie Segmentation via CDN -->
+  <!-- Chargement de MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
   <style>
@@ -79,7 +79,6 @@
       z-index: 99999;
     }
 
-    /* Le Canvas affiche le rendu composite final (Fond d'époque + Utilisateur détouré) */
     #ar-canvas {
       position: absolute;
       inset: 0;
@@ -89,8 +88,7 @@
       z-index: 2;
     }
 
-    /* La balise vidéo reste cachée en arrière-plan pour alimenter MediaPipe */
-    #webcam-feed {
+    #webcam-feed, #background-video {
       display: none;
     }
 
@@ -108,31 +106,44 @@
       cursor: pointer;
     }
 
+    /* BARRE D'ACTIONS REHAUSSÉE POUR ÉVITER LE MASQUAGE SUR MOBILE */
     .ar-controls {
       position: absolute;
-      bottom: calc(35px + env(safe-area-inset-bottom));
+      bottom: calc(90px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
       background: rgba(0, 0, 0, 0.75);
-      padding: 12px 24px;
+      padding: 10px 18px;
       border-radius: 40px;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(212, 175, 55, 0.4);
     }
 
-    .btn-capture {
+    .btn-capture, .btn-record {
       background-color: #d4af37;
       color: #000;
       border: none;
-      padding: 12px 24px;
+      padding: 10px 18px;
       border-radius: 25px;
       font-weight: bold;
-      font-size: 1rem;
+      font-size: 0.9rem;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .btn-record.recording {
+      background-color: #e74c3c;
+      color: #fff;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -149,10 +160,12 @@
     <button class="btn-close-ar" onclick="fermerExperience()">❌ Fermer</button>
     
     <video id="webcam-feed" playsinline autoplay muted></video>
+    <video id="background-video" playsinline autoplay loop muted crossorigin="anonymous"></video>
     <canvas id="ar-canvas"></canvas>
 
     <div class="ar-controls">
-      <button class="btn-capture" id="btn-main" onclick="telechargerPhoto()">📸 Enregistrer la Photo</button>
+      <button class="btn-capture" onclick="telechargerPhoto()">📸 Photo</button>
+      <button class="btn-record" id="btn-rec" onclick="basculerEnregistrement()">🎥 Vidéo</button>
     </div>
   </div>
 
@@ -162,15 +175,21 @@
     const parcoursId = urlParams.get('id');
 
     let videoElement = document.getElementById('webcam-feed');
+    let bgVideoElement = document.getElementById('background-video');
     let canvasElement = document.getElementById('ar-canvas');
     let ctx = canvasElement.getContext('2d');
     
     let cameraStream = null;
     let selfieSegmentation = null;
-    let fondEpoche = new Image();
+    let fondEpocheImg = new Image();
+    let isBgVideo = false;
     let isProcessing = false;
 
-    // Canvas temporaire pour le détourage
+    // Gestion Enregistrement Vidéo
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
 
@@ -216,25 +235,30 @@
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
-      // Chargement du fond (image/cadre d'époque)
-      fondEpoche.crossOrigin = "anonymous";
-      fondEpoche.src = mediaUrl;
+      // Détection de la nature du média (Vidéo ou Image)
+      if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm')) {
+        isBgVideo = true;
+        bgVideoElement.src = mediaUrl;
+        await bgVideoElement.play();
+      } else {
+        isBgVideo = false;
+        fondEpocheImg.crossOrigin = "anonymous";
+        fondEpocheImg.src = mediaUrl;
+      }
 
-      // Initialisation de MediaPipe Selfie Segmentation
       if (!selfieSegmentation) {
         selfieSegmentation = new SelfieSegmentation({
           locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
         });
 
         selfieSegmentation.setOptions({
-          modelSelection: 1, // 1 pour modèle complet (haute qualité), 0 pour paysage
-          selfieMode: true   // Effet miroir
+          modelSelection: 1,
+          selfieMode: true
         });
 
         selfieSegmentation.onResults(onResults);
       }
 
-      // Demande d'accès à la caméra
       try {
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -265,33 +289,38 @@
       canvasElement.width = personCanvas.width = w;
       canvasElement.height = personCanvas.height = h;
 
-      // 1. Découpage propre de l'utilisateur
+      // 1. Découpage utilisateur
       pCtx.save();
       pCtx.clearRect(0, 0, w, h);
       pCtx.drawImage(results.image, 0, 0, w, h);
       pCtx.globalCompositeOperation = 'destination-in';
-      pCtx.filter = 'blur(4px)'; // Adoucit les bords du masque
+      pCtx.filter = 'blur(4px)';
       pCtx.drawImage(results.segmentationMask, 0, 0, w, h);
       pCtx.restore();
 
-      // 2. Composition finale sur le canvas principal
+      // 2. Composition finale
       ctx.clearRect(0, 0, w, h);
 
-      // Dessiner le fond d'époque
-      if (fondEpoche.complete && fondEpoche.naturalWidth !== 0) {
-        ctx.drawImage(fondEpoche, 0, 0, w, h);
+      // Fond animé (Vidéo) ou fixe (Image)
+      if (isBgVideo && bgVideoElement.readyState >= 2) {
+        ctx.drawImage(bgVideoElement, 0, 0, w, h);
+      } else if (!isBgVideo && fondEpocheImg.complete && fondEpocheImg.naturalWidth !== 0) {
+        ctx.drawImage(fondEpocheImg, 0, 0, w, h);
       } else {
         ctx.fillStyle = "#111";
         ctx.fillRect(0, 0, w, h);
       }
 
-      // Superposer l'utilisateur détouré
+      // Incrustation personne
       ctx.drawImage(personCanvas, 0, 0, w, h);
     }
 
     function fermerExperience() {
       isProcessing = false;
+      if (isRecording) basculerEnregistrement();
+      
       const arOverlay = document.getElementById('ar-overlay');
+      if (bgVideoElement) bgVideoElement.pause();
       
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
@@ -320,6 +349,38 @@
           a.click();
         }
       }, 'image/png');
+    }
+
+    function basculerEnregistrement() {
+      const btnRec = document.getElementById('btn-rec');
+      if (!isRecording) {
+        recordedChunks = [];
+        const stream = canvasElement.captureStream(30);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `mueseum-exploit-${Date.now()}.webm`;
+          a.click();
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        btnRec.textContent = "⏹ Arrêter";
+        btnRec.classList.add('recording');
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        btnRec.textContent = "🎥 Vidéo";
+        btnRec.classList.remove('recording');
+      }
     }
   </script>
 </body>

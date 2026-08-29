@@ -106,7 +106,6 @@
       cursor: pointer;
     }
 
-    /* BARRE D'ACTIONS REHAUSSÉE POUR ÉVITER LE MASQUAGE SUR MOBILE */
     .ar-controls {
       position: absolute;
       bottom: calc(90px + env(safe-area-inset-bottom));
@@ -165,7 +164,7 @@
 
     <div class="ar-controls">
       <button class="btn-capture" onclick="telechargerPhoto()">📸 Photo</button>
-      <button class="btn-record" id="btn-rec" onclick="basculerEnregistrement()">🎥 Vidéo</button>
+      <button class="btn-record" id="btn-rec" onclick="basculerEnregistrement()">🎥 Filmer</button>
     </div>
   </div>
 
@@ -185,7 +184,7 @@
     let isBgVideo = false;
     let isProcessing = false;
 
-    // Gestion Enregistrement Vidéo
+    // Gestion enregistrement & partage vidéo
     let mediaRecorder = null;
     let recordedChunks = [];
     let isRecording = false;
@@ -235,7 +234,6 @@
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
-      // Détection de la nature du média (Vidéo ou Image)
       if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm')) {
         isBgVideo = true;
         bgVideoElement.src = mediaUrl;
@@ -289,7 +287,7 @@
       canvasElement.width = personCanvas.width = w;
       canvasElement.height = personCanvas.height = h;
 
-      // 1. Découpage utilisateur
+      // 1. Découpage personne
       pCtx.save();
       pCtx.clearRect(0, 0, w, h);
       pCtx.drawImage(results.image, 0, 0, w, h);
@@ -298,10 +296,9 @@
       pCtx.drawImage(results.segmentationMask, 0, 0, w, h);
       pCtx.restore();
 
-      // 2. Composition finale
+      // 2. Rendu final
       ctx.clearRect(0, 0, w, h);
 
-      // Fond animé (Vidéo) ou fixe (Image)
       if (isBgVideo && bgVideoElement.readyState >= 2) {
         ctx.drawImage(bgVideoElement, 0, 0, w, h);
       } else if (!isBgVideo && fondEpocheImg.complete && fondEpocheImg.naturalWidth !== 0) {
@@ -311,7 +308,6 @@
         ctx.fillRect(0, 0, w, h);
       }
 
-      // Incrustation personne
       ctx.drawImage(personCanvas, 0, 0, w, h);
     }
 
@@ -351,35 +347,76 @@
       }, 'image/png');
     }
 
+    // FONCTION EXTRAITE DE L'ANCIEN CODE : Sélection du format compatible Partage
+    function obtenirMimeTypeVideo() {
+      const types = [
+        'video/mp4;codecs=avc1',
+        'video/mp4',
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      for (let t of types) {
+        if (MediaRecorder.isTypeSupported(t)) return t;
+      }
+      return '';
+    }
+
     function basculerEnregistrement() {
       const btnRec = document.getElementById('btn-rec');
-      if (!isRecording) {
+      
+      if (isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        btnRec.textContent = "🎥 Filmer";
+        btnRec.classList.remove('recording');
+      } else {
         recordedChunks = [];
-        const stream = canvasElement.captureStream(30);
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        const mimeType = obtenirMimeTypeVideo();
+        const canvasStream = canvasElement.captureStream(30);
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) recordedChunks.push(e.data);
+        try {
+          mediaRecorder = mimeType ? new MediaRecorder(canvasStream, { mimeType }) : new MediaRecorder(canvasStream);
+        } catch (e) {
+          mediaRecorder = new MediaRecorder(canvasStream);
+        }
+
+        mediaRecorder.ondataavailable = e => { 
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data); 
         };
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `mueseum-exploit-${Date.now()}.webm`;
-          a.click();
+        mediaRecorder.onstop = async () => {
+          const isMp4 = mimeType.includes('mp4');
+          const ext = isMp4 ? 'mp4' : 'webm';
+          const typeMimeFinal = isMp4 ? 'video/mp4' : 'video/webm';
+
+          const blob = new Blob(recordedChunks, { type: typeMimeFinal });
+          const file = new File([blob], `mueseum-video-${Date.now()}.${ext}`, { type: typeMimeFinal });
+
+          // Partage natif mobile (iOS/Android)
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'Vidéo MUE.SÉUM',
+                text: 'Découvre mon voyage dans le temps !'
+              });
+            } catch (err) {
+              console.log("Partage vidéo annulé");
+            }
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `mueseum-video.${ext}`;
+            a.click();
+          }
         };
 
         mediaRecorder.start();
         isRecording = true;
         btnRec.textContent = "⏹ Arrêter";
         btnRec.classList.add('recording');
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        btnRec.textContent = "🎥 Vidéo";
-        btnRec.classList.remove('recording');
       }
     }
   </script>

@@ -79,7 +79,7 @@
       z-index: 99999;
     }
     
-    /* Le décor du passé occupe l'intégralité de l'écran */
+    /* Le décor du passé occupe l'intégralité de l'écran avec 100% de lisibilité */
     #video-overlay {
       position: absolute;
       inset: 0;
@@ -87,9 +87,11 @@
       height: 100%;
       object-fit: cover;
       z-index: 1;
+      opacity: 1; /* Luminosité et contraste maximums */
+      filter: contrast(105%) brightness(100%);
     }
 
-    /* Incrustation de la caméra utilisateur en immersion */
+    /* Flux de retour caméra utilisateur */
     #camera-feed {
       position: absolute;
       inset: 0;
@@ -98,8 +100,7 @@
       object-fit: cover;
       transform: scaleX(-1);
       z-index: 2;
-      opacity: 0.85;
-      mix-blend-mode: screen;
+      opacity: 0.9;
     }
 
     /* Le Canvas de rendu final de la photo */
@@ -186,10 +187,10 @@
     <video id="camera-feed" autoplay playsinline muted></video>
     <canvas id="ar-canvas-render"></canvas>
 
-    <div id="loader-badge">⏳ Incrustation dans le passé...</div>
+    <div id="loader-badge">⏳ Création du souvenir net...</div>
 
     <div class="ar-controls">
-      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Immortalisé la photo</button>
+      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Immortaliser la photo</button>
       <button class="btn-capture" id="btn-retry" onclick="reprendrePhoto()" style="display: none;">🔄 Reprendre</button>
     </div>
   </div>
@@ -315,7 +316,7 @@
         ctx.save();
         ctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
 
-        // 1. Fond historique
+        // 1. Fond historique haute fidélité
         if (videoOverlay && videoOverlay.readyState >= 2) {
           ctx.drawImage(videoOverlay, 0, 0, renderCanvas.width, renderCanvas.height);
         } else {
@@ -323,7 +324,7 @@
           ctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
         }
 
-        // 2. Découpe du personnage
+        // 2. Découpe nette de la personne
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = renderCanvas.width;
         tempCanvas.height = renderCanvas.height;

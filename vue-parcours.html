@@ -65,11 +65,6 @@
       cursor: pointer;
       margin-top: 6px;
     }
-    .btn-ar:disabled {
-      background-color: #555;
-      color: #aaa;
-      cursor: not-allowed;
-    }
     #ar-overlay {
       display: none;
       position: fixed;
@@ -164,7 +159,6 @@
     let imageSegmenter = null;
     let streamCamera = null;
     let animFrameId = null;
-    let isIaReady = false;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -198,9 +192,7 @@
           <div class="popup-content">
             <b>${pt.nom}</b><br>
             <p style="margin: 4px 0; font-size: 0.85rem;">${titreAnim}</p>
-            <button class="btn-ar" id="btn-launch-ar" onclick="lancerExperience('${pt.video}')">
-              ${isIaReady ? "📸 Lancer l'expérience" : "⏳ Chargement IA..."}
-            </button>
+            <button class="btn-ar" onclick="lancerExperience('${pt.video}')">📸 Lancer l'expérience</button>
           </div>
         `;
 
@@ -213,22 +205,14 @@
       }
     }
 
-    // INITIALISATION ROBUSTE DE MEDIAPIPE VISION
-    async function initialiserIAGoogle() {
+    // CHARGEMENT EN ARRIÈRE-PLAN SANS BLOQUER L'INTERFACE
+    async function chargerMoteurIA() {
       try {
-        // Résolution de l'objet global exposé par le CDN
-        const visionModule = window.tasksVision || window.Vision;
-
-        if (!visionModule) {
-          console.error("Le module Vision n'a pas pu être chargé depuis le CDN.");
-          return;
-        }
-
-        const vision = await visionModule.FilesetResolver.forVisionTasks(
+        const vision = await (window.tasksVision || window.Vision).FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
         
-        imageSegmenter = await visionModule.ImageSegmenter.createFromOptions(vision, {
+        imageSegmenter = await (window.tasksVision || window.Vision).ImageSegmenter.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
             delegate: "CPU"
@@ -237,28 +221,13 @@
           outputCategoryMask: true,
           outputConfidenceMasks: false
         });
-
-        isIaReady = true;
-        
-        // Mise à jour visuelle des boutons de carte si ouverts
-        const btnAr = document.getElementById('btn-launch-ar');
-        if (btnAr) {
-          btnAr.textContent = "📸 Lancer l'expérience";
-        }
-      } catch (err) {
-        console.error("Erreur critique d'initialisation du modèle IA:", err);
+      } catch (e) {
+        console.warn("MediaPipe V2 n'a pas pu être chargé, bascule sur le rendu standard.", e);
       }
     }
-    
-    // Lancement au chargement de la fenêtre
-    window.addEventListener('load', initialiserIAGoogle);
+    chargerMoteurIA();
 
     async function lancerExperience(videoUrl) {
-      if (!isIaReady || !imageSegmenter) {
-        alert("Le moteur IA est toujours en cours de téléchargement depuis le réseau. Réessayez dans un instant.");
-        return;
-      }
-
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -285,7 +254,7 @@
           demarrerBoucleRendu();
         };
       } catch (e) {
-        alert("Impossible d'accéder à la caméra. Autorisez l'accès à la caméra dans votre navigateur.");
+        alert("Accès caméra refusé ou non disponible.");
       }
     }
 
@@ -312,65 +281,73 @@
       let lastStartTimeMs = -1;
 
       async function renderFrame() {
-        if (cameraFeed.readyState >= 2 && cameraFeed.currentTime !== lastStartTimeMs && imageSegmenter) {
-          lastStartTimeMs = cameraFeed.currentTime;
-          
+        if (cameraFeed.readyState >= 2) {
           canvas.width = cameraFeed.videoWidth || 1280;
           canvas.height = cameraFeed.videoHeight || 720;
           const w = canvas.width;
           const h = canvas.height;
 
-          const startTimeMs = performance.now();
-          imageSegmenter.segmentForVideo(cameraFeed, startTimeMs, (result) => {
-            ctx.save();
-            ctx.clearRect(0, 0, w, h);
+          // Si le moteur IA est prêt, on exécute la segmentation WASM
+          if (imageSegmenter && cameraFeed.currentTime !== lastStartTimeMs) {
+            lastStartTimeMs = cameraFeed.currentTime;
+            const startTimeMs = performance.now();
+            
+            imageSegmenter.segmentForVideo(cameraFeed, startTimeMs, (result) => {
+              ctx.save();
+              ctx.clearRect(0, 0, w, h);
 
-            // 1. Décor d'époque
+              if (videoOverlay && videoOverlay.readyState >= 2) {
+                ctx.drawImage(videoOverlay, 0, 0, w, h);
+              } else {
+                ctx.fillStyle = "#111111";
+                ctx.fillRect(0, 0, w, h);
+              }
+
+              const mask = result.categoryMask;
+              if (mask) {
+                const maskArray = mask.getAsUint8Array();
+                const maskCanvas = document.createElement('canvas');
+                maskCanvas.width = mask.width;
+                maskCanvas.height = mask.height;
+                const maskCtx = maskCanvas.getContext('2d');
+                const maskImgData = maskCtx.createImageData(mask.width, mask.height);
+
+                for (let i = 0; i < maskArray.length; i++) {
+                  maskImgData.data[i * 4 + 3] = maskArray[i] !== 0 ? 255 : 0;
+                }
+                maskCtx.putImageData(maskImgData, 0, 0);
+
+                const personCanvas = document.createElement('canvas');
+                personCanvas.width = w;
+                personCanvas.height = h;
+                const personCtx = personCanvas.getContext('2d');
+
+                personCtx.save();
+                personCtx.translate(w, 0);
+                personCtx.scale(-1, 1);
+                personCtx.drawImage(cameraFeed, 0, 0, w, h);
+                personCtx.restore();
+
+                personCtx.globalCompositeOperation = 'destination-in';
+                personCtx.filter = 'blur(2px)';
+                personCtx.drawImage(maskCanvas, 0, 0, w, h);
+
+                ctx.drawImage(personCanvas, 0, 0);
+              }
+              ctx.restore();
+            });
+          } else {
+            // Rendu direct caméra + overlay si l'IA n'a pas encore fini de charger
+            ctx.save();
             if (videoOverlay && videoOverlay.readyState >= 2) {
               ctx.drawImage(videoOverlay, 0, 0, w, h);
-            } else {
-              ctx.fillStyle = "#111111";
-              ctx.fillRect(0, 0, w, h);
             }
-
-            // 2. Traitement du masque
-            const mask = result.categoryMask;
-            if (mask) {
-              const maskArray = mask.getAsUint8Array();
-
-              const maskCanvas = document.createElement('canvas');
-              maskCanvas.width = mask.width;
-              maskCanvas.height = mask.height;
-              const maskCtx = maskCanvas.getContext('2d');
-              const maskImgData = maskCtx.createImageData(mask.width, mask.height);
-
-              for (let i = 0; i < maskArray.length; i++) {
-                const isPerson = maskArray[i] !== 0;
-                maskImgData.data[i * 4 + 3] = isPerson ? 255 : 0;
-              }
-              maskCtx.putImageData(maskImgData, 0, 0);
-
-              // 3. Silhouette utilisateur
-              const personCanvas = document.createElement('canvas');
-              personCanvas.width = w;
-              personCanvas.height = h;
-              const personCtx = personCanvas.getContext('2d');
-
-              personCtx.save();
-              personCtx.translate(w, 0);
-              personCtx.scale(-1, 1);
-              personCtx.drawImage(cameraFeed, 0, 0, w, h);
-              personCtx.restore();
-
-              personCtx.globalCompositeOperation = 'destination-in';
-              personCtx.filter = 'blur(2px)';
-              personCtx.drawImage(maskCanvas, 0, 0, w, h);
-
-              // 4. Composition finale
-              ctx.drawImage(personCanvas, 0, 0);
-            }
+            ctx.translate(w, 0);
+            ctx.scale(-1, 1);
+            ctx.globalAlpha = 0.85;
+            ctx.drawImage(cameraFeed, 0, 0, w, h);
             ctx.restore();
-          });
+          }
         }
         animFrameId = requestAnimationFrame(renderFrame);
       }

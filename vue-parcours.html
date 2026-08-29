@@ -6,8 +6,7 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
 
   <style>
     body {
@@ -157,8 +156,9 @@
 
     let mediaRecorder;
     let recordedChunks = [];
-    let selfieSegmentation;
-    let cameraInstance;
+    let imageSegmenter;
+    let streamCamera;
+    let animFrameId;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -205,20 +205,25 @@
       }
     }
 
-    function initialiserIA() {
-      selfieSegmentation = new SelfieSegmentation({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+    // INITIALISATION DE GOOGLE MEDIAPIPE TASKS V2 (WASM)
+    async function initialiserIAGoogle() {
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+      );
+      
+      imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        outputCategoryMask: true,
+        outputConfidenceMasks: false
       });
-
-      selfieSegmentation.setOptions({
-        modelSelection: 1, // Modèle Landscape (Haute Définition)
-      });
-
-      selfieSegmentation.onResults(surResultatsDétourage);
     }
-    initialiserIA();
+    initialiserIAGoogle();
 
-    function lancerExperience(videoUrl) {
+    async function lancerExperience(videoUrl) {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -229,95 +234,114 @@
       
       const playPromise = videoOverlay.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          videoOverlay.play();
-        });
+        playPromise.catch(() => videoOverlay.play());
       }
 
       arOverlay.style.display = 'block';
 
-      if (cameraInstance) {
-        cameraInstance.stop();
+      // Accès direct à la caméra sans wrapper supplémentaire
+      try {
+        streamCamera = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+          audio: false
+        });
+        cameraFeed.srcObject = streamCamera;
+        cameraFeed.onloadedmetadata = () => {
+          cameraFeed.play();
+          demarrerBoucleRendu();
+        };
+      } catch (e) {
+        alert("Impossible d'accéder à la caméra");
       }
-
-      cameraInstance = new Camera(cameraFeed, {
-        onFrame: async () => {
-          await selfieSegmentation.send({ image: cameraFeed });
-        },
-        width: 1280,
-        height: 720,
-        facingMode: 'user'
-      });
-      cameraInstance.start();
     }
 
     function fermerCamera() {
       const arOverlay = document.getElementById('ar-overlay');
       const videoOverlay = document.getElementById('video-overlay');
-      
-      if (cameraInstance) {
-        cameraInstance.stop();
-      }
+      const cameraFeed = document.getElementById('camera-feed');
+
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (streamCamera) streamCamera.getTracks().forEach(track => track.stop());
+
       videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
 
-    // TRAITEMENT DU MASQUE AVEC FLOU D'ALPHA ET LISSAGE DES CONTOURS
-    function surResultatsDétourage(results) {
+    // BOUCLE TEMPS RÉEL DE DECOUPAGE ET COMPOSITING
+    function demarrerBoucleRendu() {
       const canvas = document.getElementById('ar-canvas-render');
       const ctx = canvas.getContext('2d');
+      const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
 
-      canvas.width = results.image.width || 1280;
-      canvas.height = results.image.height || 720;
-      const w = canvas.width;
-      const h = canvas.height;
+      let lastStartTimeMs = -1;
 
-      ctx.save();
-      ctx.clearRect(0, 0, w, h);
+      async function renderFrame() {
+        if (cameraFeed.currentTime !== lastStartTimeMs && imageSegmenter) {
+          lastStartTimeMs = cameraFeed.currentTime;
+          
+          canvas.width = cameraFeed.videoWidth || 1280;
+          canvas.height = cameraFeed.videoHeight || 720;
+          const w = canvas.width;
+          const h = canvas.height;
 
-      // 1. Dessiner l'animation en arrière-plan
-      if (videoOverlay && videoOverlay.readyState >= 2) {
-        ctx.drawImage(videoOverlay, 0, 0, w, h);
-      } else {
-        ctx.fillStyle = "#111111";
-        ctx.fillRect(0, 0, w, h);
+          // Exécution de la segmentation WASM Google
+          const startTimeMs = performance.now();
+          imageSegmenter.segmentForVideo(cameraFeed, startTimeMs, (result) => {
+            ctx.save();
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Dessiner le fond (Vidéo d'archive)
+            if (videoOverlay && videoOverlay.readyState >= 2) {
+              ctx.drawImage(videoOverlay, 0, 0, w, h);
+            } else {
+              ctx.fillStyle = "#111111";
+              ctx.fillRect(0, 0, w, h);
+            }
+
+            // 2. Extraire le masque d'isolation de la personne
+            const mask = result.categoryMask;
+            const maskArray = mask.getAsUint8Array();
+
+            // Créer le bitmap du masque avec adoucissement
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = mask.width;
+            maskCanvas.height = mask.height;
+            const maskCtx = maskCanvas.getContext('2d');
+            const maskImgData = maskCtx.createImageData(mask.width, mask.height);
+
+            for (let i = 0; i < maskArray.length; i++) {
+              // Si c'est la personne (Catégorie != 0), opacité à 255
+              const isPerson = maskArray[i] !== 0;
+              maskImgData.data[i * 4 + 3] = isPerson ? 255 : 0;
+            }
+            maskCtx.putImageData(maskImgData, 0, 0);
+
+            // 3. Dessiner la silhouette miroir de la personne sur un Canvas temporaire
+            const personCanvas = document.createElement('canvas');
+            personCanvas.width = w;
+            personCanvas.height = h;
+            const personCtx = personCanvas.getContext('2d');
+
+            personCtx.save();
+            personCtx.translate(w, 0);
+            personCtx.scale(-1, 1);
+            personCtx.drawImage(cameraFeed, 0, 0, w, h);
+            personCtx.restore();
+
+            // Application du masque adouci pour éviter les découpes dures sur les cheveux
+            personCtx.globalCompositeOperation = 'destination-in';
+            personCtx.filter = 'blur(3px)';
+            personCtx.drawImage(maskCanvas, 0, 0, w, h);
+
+            // 4. Fusionner la personne au-dessus de l'arrière-plan d'époque
+            ctx.drawImage(personCanvas, 0, 0);
+            ctx.restore();
+          });
+        }
+        animFrameId = requestAnimationFrame(renderFrame);
       }
-
-      // 2. Création d'un canvas intermédiaire pour la silhouette détourée
-      const fgCanvas = document.createElement('canvas');
-      fgCanvas.width = w;
-      fgCanvas.height = h;
-      const fgCtx = fgCanvas.getContext('2d');
-
-      // Dessiner l'image de la caméra en mode miroir
-      fgCtx.save();
-      fgCtx.translate(w, 0);
-      fgCtx.scale(-1, 1);
-      fgCtx.drawImage(results.image, 0, 0, w, h);
-      fgCtx.restore();
-
-      // 3. Application du masque avec lissage des contours (Soft Alpha Masking)
-      const maskCanvas = document.createElement('canvas');
-      maskCanvas.width = w;
-      maskCanvas.height = h;
-      const maskCtx = maskCanvas.getContext('2d');
-
-      // Dessiner le masque MediaPipe de base
-      maskCtx.drawImage(results.segmentationMask, 0, 0, w, h);
-
-      // Appliquer un léger flou gaussien sur le masque pour supprimer l'effet "pixelisé/escalier" sur les cheveux et vêtements
-      maskCtx.globalCompositeOperation = 'destination-out';
-      maskCtx.filter = 'blur(4px)'; 
-
-      // Fusionner le masque adouci avec le premier plan
-      fgCtx.globalCompositeOperation = 'destination-in';
-      fgCtx.drawImage(maskCanvas, 0, 0, w, h);
-
-      // 4. Inserer la silhouette parfaitement intégrée sur le décor historique
-      ctx.drawImage(fgCanvas, 0, 0);
-
-      ctx.restore();
+      renderFrame();
     }
 
     function prendrePhotoCombiner() {

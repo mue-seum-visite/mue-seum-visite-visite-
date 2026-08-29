@@ -15,7 +15,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background-color: #121212;
+      background-color: #000000;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
@@ -68,7 +68,7 @@
       margin-top: 6px;
     }
     
-    /* OVERLAY EXPÉRIENCE EN IMMERSION TOTALE */
+    /* OVERLAY IMMERSION TOTALE */
     #ar-overlay {
       display: none;
       position: fixed;
@@ -79,7 +79,7 @@
       z-index: 99999;
     }
     
-    /* Le décor du passé occupe l'intégralité de l'écran avec 100% de lisibilité */
+    /* 1. Décor d'époque : Haute Définition, Détails & Contrastes intacts */
     #video-overlay {
       position: absolute;
       inset: 0;
@@ -87,23 +87,26 @@
       height: 100%;
       object-fit: cover;
       z-index: 1;
-      opacity: 1; /* Luminosité et contraste maximums */
-      filter: contrast(105%) brightness(100%);
+      opacity: 1;
+      filter: contrast(110%) brightness(95%);
     }
 
-    /* Flux de retour caméra utilisateur */
+    /* 2. Caméra utilisateur en temps réel */
     #camera-feed {
+      display: none; /* Utilisé en mémoire pour la découpe */
+    }
+
+    /* 3. Zone de vue interactive en direct */
+    #live-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1);
       z-index: 2;
-      opacity: 0.9;
     }
 
-    /* Le Canvas de rendu final de la photo */
+    /* 4. Photo finale capturée */
     #ar-canvas-render {
       display: none;
       position: absolute;
@@ -118,7 +121,7 @@
       position: absolute;
       top: calc(20px + env(safe-area-inset-top));
       right: 20px;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.7);
       color: #fff;
       border: 1px solid #d4af37;
       padding: 10px 18px;
@@ -147,12 +150,12 @@
       background-color: #d4af37;
       color: #000;
       border: none;
-      padding: 12px 22px;
+      padding: 12px 24px;
       border-radius: 25px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 1rem;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
     #loader-badge {
@@ -185,12 +188,13 @@
     
     <video id="video-overlay" autoplay loop muted playsinline crossorigin="anonymous"></video>
     <video id="camera-feed" autoplay playsinline muted></video>
+    <canvas id="live-canvas"></canvas>
     <canvas id="ar-canvas-render"></canvas>
 
-    <div id="loader-badge">⏳ Création du souvenir net...</div>
+    <div id="loader-badge">⏳ Incrustation dans l'époque...</div>
 
     <div class="ar-controls">
-      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Immortaliser la photo</button>
+      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Capturer Photo</button>
       <button class="btn-capture" id="btn-retry" onclick="reprendrePhoto()" style="display: none;">🔄 Reprendre</button>
     </div>
   </div>
@@ -203,6 +207,7 @@
     let selfieSegmentation = null;
     let cameraStream = null;
     let photoPrise = false;
+    let animationFrameId = null;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -283,6 +288,7 @@
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
@@ -316,15 +322,17 @@
         ctx.save();
         ctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
 
-        // 1. Fond historique haute fidélité
+        // 1. Fond historique en haute résolution avec contrastes poussés
         if (videoOverlay && videoOverlay.readyState >= 2) {
+          ctx.filter = "contrast(110%) brightness(95%)";
           ctx.drawImage(videoOverlay, 0, 0, renderCanvas.width, renderCanvas.height);
+          ctx.filter = "none";
         } else {
           ctx.fillStyle = "#111111";
           ctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
         }
 
-        // 2. Découpe nette de la personne
+        // 2. Découpe nette du personnage sans détérioration du fond
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = renderCanvas.width;
         tempCanvas.height = renderCanvas.height;
@@ -340,7 +348,8 @@
         ctx.drawImage(tempCanvas, 0, 0);
         ctx.restore();
 
-        cameraFeed.style.display = 'none';
+        // Affichage de la photo finale
+        document.getElementById('live-canvas').style.display = 'none';
         videoOverlay.style.display = 'none';
         renderCanvas.style.display = 'block';
         badge.style.display = 'none';
@@ -356,7 +365,6 @@
     }
 
     function reprendrePhoto() {
-      const cameraFeed = document.getElementById('camera-feed');
       const renderCanvas = document.getElementById('ar-canvas-render');
       const videoOverlay = document.getElementById('video-overlay');
       const btnMain = document.getElementById('btn-main');
@@ -364,10 +372,10 @@
 
       photoPrise = false;
       renderCanvas.style.display = 'none';
-      cameraFeed.style.display = 'block';
+      document.getElementById('live-canvas').style.display = 'block';
       videoOverlay.style.display = 'block';
 
-      btnMain.textContent = "📸 Immortaliser la photo";
+      btnMain.textContent = "📸 Capturer Photo";
       btnMain.style.backgroundColor = "#d4af37";
       btnMain.style.color = "#000000";
       btnRetry.style.display = "none";

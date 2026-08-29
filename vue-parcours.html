@@ -234,12 +234,19 @@
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
-      if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm')) {
-        isBgVideo = true;
+      // Nettoyage de l'URL pour la détection du format (indépendant des paramètres ?v=1 et des majuscules)
+      const urlPropre = mediaUrl.split('?')[0].toLowerCase();
+      isBgVideo = urlPropre.endsWith('.mp4') || urlPropre.endsWith('.webm') || urlPropre.endsWith('.mov');
+
+      if (isBgVideo) {
         bgVideoElement.src = mediaUrl;
-        await bgVideoElement.play();
+        bgVideoElement.currentTime = 0;
+        try {
+          await bgVideoElement.play();
+        } catch (err) {
+          console.log("Erreur lecture vidéo:", err);
+        }
       } else {
-        isBgVideo = false;
         fondEpocheImg.crossOrigin = "anonymous";
         fondEpocheImg.src = mediaUrl;
       }
@@ -347,7 +354,6 @@
       }, 'image/png');
     }
 
-    // FONCTION EXTRAITE DE L'ANCIEN CODE : Sélection du format compatible Partage
     function obtenirMimeTypeVideo() {
       const types = [
         'video/mp4;codecs=avc1',
@@ -393,7 +399,6 @@
           const blob = new Blob(recordedChunks, { type: typeMimeFinal });
           const file = new File([blob], `mueseum-video-${Date.now()}.${ext}`, { type: typeMimeFinal });
 
-          // Partage natif mobile (iOS/Android)
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
               await navigator.share({

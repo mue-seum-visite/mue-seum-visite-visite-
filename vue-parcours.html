@@ -6,8 +6,9 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <!-- Ingestion CDN Tasks Vision -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
+  <!-- MediaPipe V1 : Ultra-compatible Safari & Mobile -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 
   <style>
     body {
@@ -157,9 +158,8 @@
 
     let mediaRecorder;
     let recordedChunks = [];
-    let imageSegmenter = null;
-    let streamCamera = null;
-    let animFrameId = null;
+    let cameraInstance = null;
+    let selfieSegmentation = null;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -206,228 +206,96 @@
       }
     }
 
-    // CHARGEMENT OPTIMISÉ POUR IOS/SAFARI (GPU + WASM CDN)
-    async function chargerMoteurIA() {
-      try {
-        const visionPkg = window.tasksVision || window.Vision;
-        if (!visionPkg) return;
+    // INITIALISATION DU MOTEUR MEDIAPE V1
+    function initialiserIA() {
+      const canvasElement = document.getElementById('ar-canvas-render');
+      const canvasCtx = canvasElement.getContext('2d');
+      const videoOverlay = document.getElementById('video-overlay');
 
-        const vision = await visionPkg.FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-        );
-        
-        // Essai avec accélération GPU (nécessaire sur iOS Safari)
-        try {
-          imageSegmenter = await visionPkg.ImageSegmenter.createFromOptions(vision, {
-            baseOptions: {
-              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-              delegate: "GPU"
-            },
-            runningMode: "VIDEO",
-            outputCategoryMask: true,
-            outputConfidenceMasks: false
-          });
-        } catch (gpuError) {
-          // Fallback CPU si le GPU mobile bloque
-          imageSegmenter = await visionPkg.ImageSegmenter.createFromOptions(vision, {
-            baseOptions: {
-              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-              delegate: "CPU"
-            },
-            runningMode: "VIDEO",
-            outputCategoryMask: true,
-            outputConfidenceMasks: false
-          });
+      selfieSegmentation = new SelfieSegmentation({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+      });
+
+      selfieSegmentation.setOptions({ modelSelection: 1 });
+
+      selfieSegmentation.onResults((results) => {
+        canvasElement.width = results.image.width;
+        canvasElement.height = results.image.height;
+
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+        // 1. Dessiner la vidéo d'époque en arrière-plan
+        if (videoOverlay && videoOverlay.readyState >= 2) {
+          canvasCtx.drawImage(videoOverlay, 0, 0, canvasElement.width, canvasElement.height);
+        } else {
+          canvasCtx.fillStyle = '#111';
+          canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
         }
-        console.log("IA MediaPipe chargée avec succès !");
-      } catch (e) {
-        console.warn("Erreur chargement IA :", e);
-      }
+
+        // 2. Isoler la personne (masque)
+        canvasCtx.globalCompositeOperation = 'destination-authorization';
+        canvasCtx.globalCompositeOperation = 'screen';
+        canvasCtx.drawImage(results.segmentationMask, 0, 0, canvasElement.width, canvasElement.height);
+
+        // 3. Incruster le flux caméra (effet miroir appliqué)
+        canvasCtx.globalCompositeOperation = 'source-in';
+        canvasCtx.translate(canvasElement.width, 0);
+        canvasCtx.scale(-1, 1);
+        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+        canvasCtx.restore();
+      });
     }
-    
-    // Déclencher le chargement immédiatement
-    chargerMoteurIA();
 
     async function lancerExperience(videoUrl) {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
 
+      if (!selfieSegmentation) initialiserIA();
+
       videoOverlay.src = videoUrl;
       videoOverlay.muted = true;
       videoOverlay.currentTime = 0;
-      
-      const playPromise = videoOverlay.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => videoOverlay.play());
-      }
+      videoOverlay.play().catch(() => {});
 
       arOverlay.style.display = 'block';
 
-      try {
-        streamCamera = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-          audio: false
+      if (!cameraInstance) {
+        cameraInstance = new Camera(cameraFeed, {
+          onFrame: async () => {
+            await selfieSegmentation.send({ image: cameraFeed });
+          },
+          width: 1280,
+          height: 720
         });
-        cameraFeed.srcObject = streamCamera;
-        cameraFeed.onloadedmetadata = () => {
-          cameraFeed.play();
-          demarrerBoucleRendu();
-        };
-      } catch (e) {
-        alert("Accès caméra refusé ou non disponible.");
       }
+      cameraInstance.start();
     }
 
     function fermerCamera() {
       const arOverlay = document.getElementById('ar-overlay');
       const videoOverlay = document.getElementById('video-overlay');
 
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (streamCamera) {
-        streamCamera.getTracks().forEach(track => track.stop());
-        streamCamera = null;
+      if (cameraInstance) {
+        cameraInstance.stop();
       }
-
       videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
 
-    function demarrerBoucleRendu() {
-      const canvas = document.getElementById('ar-canvas-render');
-      const ctx = canvas.getContext('2d');
-      const cameraFeed = document.getElementById('camera-feed');
-      const videoOverlay = document.getElementById('video-overlay');
-
-      let lastStartTimeMs = -1;
-
-      async function renderFrame() {
-        if (cameraFeed.readyState >= 2) {
-          canvas.width = cameraFeed.videoWidth || 1280;
-          canvas.height = cameraFeed.videoHeight || 720;
-          const w = canvas.width;
-          const h = canvas.height;
-
-          // SCÉNARIO A : L'IA MediaPipe fonctionne (Découpage parfait sans transparence)
-          if (imageSegmenter && cameraFeed.currentTime !== lastStartTimeMs) {
-            lastStartTimeMs = cameraFeed.currentTime;
-            const startTimeMs = performance.now();
-            
-            imageSegmenter.segmentForVideo(cameraFeed, startTimeMs, (result) => {
-              ctx.save();
-              ctx.clearRect(0, 0, w, h);
-
-              // 1. Décor vidéo d'arrière-plan
-              if (videoOverlay && videoOverlay.readyState >= 2) {
-                ctx.drawImage(videoOverlay, 0, 0, w, h);
-              } else {
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(0, 0, w, h);
-              }
-
-              // 2. Traitement du masque de personne
-              const mask = result.categoryMask;
-              if (mask) {
-                const maskArray = mask.getAsUint8Array();
-                const maskCanvas = document.createElement('canvas');
-                maskCanvas.width = mask.width;
-                maskCanvas.height = mask.height;
-                const maskCtx = maskCanvas.getContext('2d');
-                const maskImgData = maskCtx.createImageData(mask.width, mask.height);
-
-                for (let i = 0; i < maskArray.length; i++) {
-                  maskImgData.data[i * 4 + 3] = maskArray[i] !== 0 ? 255 : 0;
-                }
-                maskCtx.putImageData(maskImgData, 0, 0);
-
-                // 3. Application du masque sur la caméra
-                const personCanvas = document.createElement('canvas');
-                personCanvas.width = w;
-                personCanvas.height = h;
-                const personCtx = personCanvas.getContext('2d');
-
-                personCtx.save();
-                personCtx.translate(w, 0);
-                personCtx.scale(-1, 1);
-                personCtx.drawImage(cameraFeed, 0, 0, w, h);
-                personCtx.restore();
-
-                personCtx.globalCompositeOperation = 'destination-in';
-                personCtx.drawImage(maskCanvas, 0, 0, w, h);
-
-                // 4. Incrustation nette de la personne
-                ctx.drawImage(personCanvas, 0, 0);
-              }
-              ctx.restore();
-            });
-          } 
-          // SCÉNARIO B : Mode secours optimisé (Nette & Opaque)
-          else {
-            ctx.save();
-            ctx.clearRect(0, 0, w, h);
-            
-            // Vidéo décor en arrière-plan
-            if (videoOverlay && videoOverlay.readyState >= 2) {
-              ctx.drawImage(videoOverlay, 0, 0, w, h);
-            }
-            
-            // Caméra opaque par-dessus avec opacité 100%
-            ctx.translate(w, 0);
-            ctx.scale(-1, 1);
-            ctx.globalAlpha = 1.0; 
-            ctx.drawImage(cameraFeed, 0, 0, w, h);
-            ctx.restore();
-          }
-        }
-        animFrameId = requestAnimationFrame(renderFrame);
-      }
-      renderFrame();
-    }
-
     function prendrePhotoCombiner() {
-      const renderCanvas = document.getElementById('ar-canvas-render');
-
-      renderCanvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const file = new File([blob], `mueseum-souvenir-${Date.now()}.png`, { type: 'image/png' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Mon souvenir MUE.SÉUM',
-              text: 'Voici ma capture en réalité augmentée !'
-            });
-          } catch (err) {
-            console.log("Partage annulé");
-          }
-        } else {
-          const imageURL = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = imageURL;
-          link.download = `mueseum-souvenir.png`;
-          link.click();
-        }
-      }, 'image/png');
-    }
-
-    function obtenirMimeTypeVideo() {
-      const types = [
-        'video/mp4;codecs=avc1',
-        'video/mp4',
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
-        'video/webm'
-      ];
-      for (let t of types) {
-        if (MediaRecorder.isTypeSupported(t)) return t;
-      }
-      return '';
+      const canvasElement = document.getElementById('ar-canvas-render');
+      const link = document.createElement('a');
+      link.download = `mueseum-souvenir-${Date.now()}.png`;
+      link.href = canvasElement.toDataURL('image/png');
+      link.click();
     }
 
     function toggleEnregistrementCombiner() {
       const btnRecord = document.getElementById('btn-record');
-      const renderCanvas = document.getElementById('ar-canvas-render');
+      const canvasElement = document.getElementById('ar-canvas-render');
 
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
@@ -435,39 +303,21 @@
         btnRecord.style.backgroundColor = "#d4af37";
       } else {
         recordedChunks = [];
-        const mimeType = obtenirMimeTypeVideo();
-        const canvasStream = renderCanvas.captureStream(25);
-
+        const stream = canvasElement.captureStream(30);
+        
         try {
-          mediaRecorder = mimeType ? new MediaRecorder(canvasStream, { mimeType }) : new MediaRecorder(canvasStream);
+          mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
         } catch (e) {
-          mediaRecorder = new MediaRecorder(canvasStream);
+          mediaRecorder = new MediaRecorder(stream);
         }
 
-        mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
-        mediaRecorder.onstop = async () => {
-          const formatExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
-          const typeMimeFinal = mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
-
-          const blob = new Blob(recordedChunks, { type: typeMimeFinal });
-          const file = new File([blob], `mueseum-video-${Date.now()}.${formatExtension}`, { type: typeMimeFinal });
-
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({
-                files: [file],
-                title: 'Vidéo MUE.SÉUM'
-              });
-            } catch (err) {
-              console.log("Partage annulé");
-            }
-          } else {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `mueseum-video.${formatExtension}`;
-            a.click();
-          }
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `mueseum-video-${Date.now()}.mp4`;
+          link.click();
         };
 
         mediaRecorder.start();

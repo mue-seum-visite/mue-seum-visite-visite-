@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -68,6 +66,7 @@
       margin-top: 6px;
     }
     
+    /* OVERLAY EXPÉRIENCE EN IMMERSION */
     #ar-overlay {
       display: none;
       position: fixed;
@@ -78,7 +77,7 @@
       z-index: 99999;
     }
     
-    /* 1. Décor d'époque parfait et détaillé */
+    /* Décor historique : 100% net et détaillé */
     #video-overlay {
       position: absolute;
       inset: 0;
@@ -89,7 +88,7 @@
       filter: contrast(110%) brightness(95%);
     }
 
-    /* 2. Caméra de retour selfie bien visible au-dessus du décor pour se placer facilement */
+    /* Retour caméra selfie ultra-fluide */
     #camera-feed {
       position: absolute;
       inset: 0;
@@ -98,10 +97,10 @@
       object-fit: cover;
       transform: scaleX(-1);
       z-index: 2;
-      opacity: 0.7; /* Permet de se voir NETTEMENT tout en apercevant le fond */
+      opacity: 0.7;
     }
 
-    /* 3. Resultat final généré par l'IA */
+    /* Canvas de rendu final généré par l'IA */
     #ar-canvas-render {
       display: none;
       position: absolute;
@@ -186,7 +185,7 @@
     <video id="camera-feed" autoplay playsinline muted></video>
     <canvas id="ar-canvas-render"></canvas>
 
-    <div id="loader-badge">🤖 L'IA vous intègre dans le décor...</div>
+    <div id="loader-badge">🤖 L'IA génère la fusion Studio...</div>
 
     <div class="ar-controls">
       <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Prendre le Selfie</button>
@@ -196,10 +195,12 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    // Configurer votre clé d'API ici (ex: PhotoRoom API)
+    const API_KEY = 'VOTRE_CLE_API_ICI';
+
     const urlParams = new URLSearchParams(window.location.search);
     const parcoursId = urlParams.get('id');
 
-    let selfieSegmentation = null;
     let cameraStream = null;
     let photoPrise = false;
 
@@ -241,19 +242,11 @@
       });
     }
 
-    function initialiserIA() {
-      selfieSegmentation = new SelfieSegmentation({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
-      });
-      selfieSegmentation.setOptions({ modelSelection: 1 });
-    }
-
     async function lancerExperience(videoUrl) {
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
 
-      if (!selfieSegmentation) initialiserIA();
       reprendrePhoto();
 
       videoOverlay.src = videoUrl;
@@ -301,63 +294,83 @@
 
       badge.style.display = 'block';
 
+      // 1. Capture instantanée de la caméra
       const snapCanvas = document.createElement('canvas');
       snapCanvas.width = cameraFeed.videoWidth || 1280;
       snapCanvas.height = cameraFeed.videoHeight || 720;
       const snapCtx = snapCanvas.getContext('2d');
+      
+      snapCtx.translate(snapCanvas.width, 0);
+      snapCtx.scale(-1, 1);
       snapCtx.drawImage(cameraFeed, 0, 0, snapCanvas.width, snapCanvas.height);
 
-      selfieSegmentation.onResults((results) => {
-        renderCanvas.width = snapCanvas.width;
-        renderCanvas.height = snapCanvas.height;
-        const ctx = renderCanvas.getContext('2d');
+      // 2. Conversion et envoi de la photo à l'API de détourage Cloud
+      snapCanvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('image_file', blob);
 
-        ctx.save();
-        ctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
+        try {
+          // Appel à l'API PhotoRoom (ou équivalent)
+          const response = await fetch('https://sdk.photoroom.com/v1/segment', {
+            method: 'POST',
+            headers: {
+              'x-api-key': API_KEY
+            },
+            body: formData
+          });
 
-        // 1. Fond historique haute qualité
-        if (videoOverlay && videoOverlay.readyState >= 2) {
-          ctx.filter = "contrast(110%) brightness(95%)";
-          ctx.drawImage(videoOverlay, 0, 0, renderCanvas.width, renderCanvas.height);
-          ctx.filter = "none";
-        } else {
-          ctx.fillStyle = "#111111";
-          ctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+          if (!response.ok) {
+            throw new Error('Erreur API');
+          }
+
+          const resultBlob = await response.blob();
+          const personImg = new Image();
+          personImg.src = URL.createObjectURL(resultBlob);
+
+          personImg.onload = () => {
+            // 3. Fusion parfaite sur le fond historique
+            renderCanvas.width = snapCanvas.width;
+            renderCanvas.height = snapCanvas.height;
+            const ctx = renderCanvas.getContext('2d');
+
+            ctx.save();
+            ctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
+
+            // Rendu du décor
+            if (videoOverlay && videoOverlay.readyState >= 2) {
+              ctx.filter = "contrast(110%) brightness(95%)";
+              ctx.drawImage(videoOverlay, 0, 0, renderCanvas.width, renderCanvas.height);
+              ctx.filter = "none";
+            } else {
+              ctx.fillStyle = "#111111";
+              ctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+            }
+
+            // Incrustation du personnage détouré par l'IA
+            ctx.filter = "contrast(105%) brightness(98%)";
+            ctx.drawImage(personImg, 0, 0, renderCanvas.width, renderCanvas.height);
+            ctx.filter = "none";
+
+            ctx.restore();
+
+            // Masquer les vidéos et afficher l'image Studio
+            cameraFeed.style.display = 'none';
+            videoOverlay.style.display = 'none';
+            renderCanvas.style.display = 'block';
+            badge.style.display = 'none';
+
+            photoPrise = true;
+            btnMain.textContent = "💾 Enregistrer / Partager";
+            btnMain.style.backgroundColor = "#4CAF50";
+            btnMain.style.color = "#ffffff";
+            btnRetry.style.display = "inline-block";
+          };
+
+        } catch (error) {
+          alert("L'API nécessite une clé valide. Veuillez ajouter votre clé PhotoRoom dans le code.");
+          badge.style.display = 'none';
         }
-
-        // 2. Découpe et placement IA du personnage au premier plan
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = renderCanvas.width;
-        tempCanvas.height = renderCanvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-
-        tempCtx.drawImage(results.segmentationMask, 0, 0, renderCanvas.width, renderCanvas.height);
-        tempCtx.globalCompositeOperation = 'source-in';
-
-        tempCtx.translate(renderCanvas.width, 0);
-        tempCtx.scale(-1, 1);
-        tempCtx.drawImage(results.image, 0, 0, renderCanvas.width, renderCanvas.height);
-
-        // Incrustation nette avec léger ajustement de luminosité pour l'harmoniser avec l'époque
-        ctx.filter = "contrast(105%) brightness(98%)";
-        ctx.drawImage(tempCanvas, 0, 0);
-        ctx.filter = "none";
-
-        ctx.restore();
-
-        cameraFeed.style.display = 'none';
-        videoOverlay.style.display = 'none';
-        renderCanvas.style.display = 'block';
-        badge.style.display = 'none';
-
-        photoPrise = true;
-        btnMain.textContent = "💾 Enregistrer / Partager";
-        btnMain.style.backgroundColor = "#4CAF50";
-        btnMain.style.color = "#ffffff";
-        btnRetry.style.display = "inline-block";
-      });
-
-      await selfieSegmentation.send({ image: snapCanvas });
+      }, 'image/jpeg', 0.95);
     }
 
     function reprendrePhoto() {

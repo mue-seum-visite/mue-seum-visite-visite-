@@ -6,6 +6,7 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
+  <!-- Ingestion CDN Tasks Vision -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
 
   <style>
@@ -102,7 +103,7 @@
 
     .ar-controls {
       position: absolute;
-      bottom: calc(100px + env(safe-area-inset-bottom));
+      bottom: calc(40px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -205,26 +206,46 @@
       }
     }
 
-    // CHARGEMENT EN ARRIÈRE-PLAN SANS BLOQUER L'INTERFACE
+    // CHARGEMENT OPTIMISÉ POUR IOS/SAFARI (GPU + WASM CDN)
     async function chargerMoteurIA() {
       try {
-        const vision = await (window.tasksVision || window.Vision).FilesetResolver.forVisionTasks(
+        const visionPkg = window.tasksVision || window.Vision;
+        if (!visionPkg) return;
+
+        const vision = await visionPkg.FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
         
-        imageSegmenter = await (window.tasksVision || window.Vision).ImageSegmenter.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-            delegate: "CPU"
-          },
-          runningMode: "VIDEO",
-          outputCategoryMask: true,
-          outputConfidenceMasks: false
-        });
+        // Essai avec accélération GPU (nécessaire sur iOS Safari)
+        try {
+          imageSegmenter = await visionPkg.ImageSegmenter.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+              delegate: "GPU"
+            },
+            runningMode: "VIDEO",
+            outputCategoryMask: true,
+            outputConfidenceMasks: false
+          });
+        } catch (gpuError) {
+          // Fallback CPU si le GPU mobile bloque
+          imageSegmenter = await visionPkg.ImageSegmenter.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+              delegate: "CPU"
+            },
+            runningMode: "VIDEO",
+            outputCategoryMask: true,
+            outputConfidenceMasks: false
+          });
+        }
+        console.log("IA MediaPipe chargée avec succès !");
       } catch (e) {
-        console.warn("MediaPipe V2 n'a pas pu être chargé, bascule sur le rendu standard.", e);
+        console.warn("Erreur chargement IA :", e);
       }
     }
+    
+    // Déclencher le chargement immédiatement
     chargerMoteurIA();
 
     async function lancerExperience(videoUrl) {
@@ -287,7 +308,7 @@
           const w = canvas.width;
           const h = canvas.height;
 
-          // Si le moteur IA est prêt, on exécute la segmentation WASM
+          // SCÉNARIO A : L'IA MediaPipe fonctionne (Découpage parfait sans transparence)
           if (imageSegmenter && cameraFeed.currentTime !== lastStartTimeMs) {
             lastStartTimeMs = cameraFeed.currentTime;
             const startTimeMs = performance.now();
@@ -296,13 +317,15 @@
               ctx.save();
               ctx.clearRect(0, 0, w, h);
 
+              // 1. Décor vidéo d'arrière-plan
               if (videoOverlay && videoOverlay.readyState >= 2) {
                 ctx.drawImage(videoOverlay, 0, 0, w, h);
               } else {
-                ctx.fillStyle = "#111111";
+                ctx.fillStyle = "#000000";
                 ctx.fillRect(0, 0, w, h);
               }
 
+              // 2. Traitement du masque de personne
               const mask = result.categoryMask;
               if (mask) {
                 const maskArray = mask.getAsUint8Array();
@@ -317,6 +340,7 @@
                 }
                 maskCtx.putImageData(maskImgData, 0, 0);
 
+                // 3. Application du masque sur la caméra
                 const personCanvas = document.createElement('canvas');
                 personCanvas.width = w;
                 personCanvas.height = h;
@@ -329,22 +353,28 @@
                 personCtx.restore();
 
                 personCtx.globalCompositeOperation = 'destination-in';
-                personCtx.filter = 'blur(2px)';
                 personCtx.drawImage(maskCanvas, 0, 0, w, h);
 
+                // 4. Incrustation nette de la personne
                 ctx.drawImage(personCanvas, 0, 0);
               }
               ctx.restore();
             });
-          } else {
-            // Rendu direct caméra + overlay si l'IA n'a pas encore fini de charger
+          } 
+          // SCÉNARIO B : Mode secours optimisé (Nette & Opaque)
+          else {
             ctx.save();
+            ctx.clearRect(0, 0, w, h);
+            
+            // Vidéo décor en arrière-plan
             if (videoOverlay && videoOverlay.readyState >= 2) {
               ctx.drawImage(videoOverlay, 0, 0, w, h);
             }
+            
+            // Caméra opaque par-dessus avec opacité 100%
             ctx.translate(w, 0);
             ctx.scale(-1, 1);
-            ctx.globalAlpha = 0.85;
+            ctx.globalAlpha = 1.0; 
             ctx.drawImage(cameraFeed, 0, 0, w, h);
             ctx.restore();
           }

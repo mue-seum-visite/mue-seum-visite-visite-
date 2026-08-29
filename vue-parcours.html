@@ -6,7 +6,6 @@
   <title>Découverte du parcours - MUE.SÉUM</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
-  <!-- MediaPipe V1 : Traitement photo rapide et stable sur iOS -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
   <style>
@@ -164,11 +163,10 @@
 
     <video id="camera-feed" autoplay playsinline muted></video>
     <canvas id="ar-canvas-render"></canvas>
-
     <video id="video-overlay" autoplay loop muted playsinline crossorigin="anonymous"></video>
 
     <div id="loader-overlay">
-      <p style="margin: 0; font-weight: bold;">⏳ Création du souvenir AR...</p>
+      <p style="margin: 0; font-weight: bold;">⏳ Détourage du souvenir...</p>
     </div>
 
     <div class="ar-controls">
@@ -274,14 +272,12 @@
       const loader = document.getElementById('loader-overlay');
 
       if (photoCapturee) {
-        // Si la photo est déjà prête, on télécharge/partage
         telechargerSouvenir();
         return;
       }
 
       loader.style.display = 'block';
 
-      // Capture de l'image de la caméra à l'instant T
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = cameraFeed.videoWidth || 1280;
       tempCanvas.height = cameraFeed.videoHeight || 720;
@@ -291,32 +287,34 @@
       selfieSegmentation.onResults((results) => {
         canvasElement.width = tempCanvas.width;
         canvasElement.height = tempCanvas.height;
+        const ctx = canvasElement.getContext('2d');
 
-        const canvasCtx = canvasElement.getContext('2d');
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        ctx.save();
+        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-        // 1. Décor d'époque fixe
-        if (videoOverlay && videoOverlay.readyState >= 2) {
-          canvasCtx.drawImage(videoOverlay, 0, 0, canvasElement.width, canvasElement.height);
+        // 1. Appliquer le masque de la personne
+        ctx.drawImage(results.segmentationMask, 0, 0, canvasElement.width, canvasElement.height);
+        ctx.globalCompositeOperation = 'source-in';
+        
+        // Personne avec effet miroir
+        ctx.translate(canvasElement.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        ctx.restore();
+
+        // 2. Dessiner la vidéo d'époque SOUS la personne
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        if (videoOverlay && videoOverlay.readyState >= 2 && !videoOverlay.paused) {
+          ctx.drawImage(videoOverlay, 0, 0, canvasElement.width, canvasElement.height);
         } else {
-          canvasCtx.fillStyle = '#111';
-          canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+          // Fond de secours si la vidéo du JSON est indisponible ou non chargée
+          ctx.fillStyle = '#1e1e1e';
+          ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
         }
+        ctx.restore();
 
-        // 2. Découpe du masque de la personne
-        canvasCtx.globalCompositeOperation = 'screen';
-        canvasCtx.drawImage(results.segmentationMask, 0, 0, canvasElement.width, canvasElement.height);
-
-        // 3. Application de la photo de la personne (effet miroir)
-        canvasCtx.globalCompositeOperation = 'source-in';
-        canvasCtx.translate(canvasElement.width, 0);
-        canvasCtx.scale(-1, 1);
-        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-        canvasCtx.restore();
-
-        // Afficher le résultat final
+        // Afficher l'image traitée
         cameraFeed.style.display = 'none';
         canvasElement.style.display = 'block';
         loader.style.display = 'none';
@@ -328,7 +326,6 @@
         btnRetry.style.display = "inline-block";
       });
 
-      // Envoyer la photo immobile à l'IA
       await selfieSegmentation.send({ image: tempCanvas });
     }
 

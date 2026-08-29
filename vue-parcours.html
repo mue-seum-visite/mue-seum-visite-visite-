@@ -156,9 +156,9 @@
 
     let mediaRecorder;
     let recordedChunks = [];
-    let imageSegmenter;
-    let streamCamera;
-    let animFrameId;
+    let imageSegmenter = null;
+    let streamCamera = null;
+    let animFrameId = null;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -205,25 +205,34 @@
       }
     }
 
-    // INITIALISATION DE GOOGLE MEDIAPIPE TASKS V2 (WASM)
+    // INITIALISATION GOOGLE TASKS AVEC CPU POUR EVITER LE BLOCAGE ECRAN NOIR
     async function initialiserIAGoogle() {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-      );
-      
-      imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-          delegate: "GPU"
-        },
-        runningMode: "VIDEO",
-        outputCategoryMask: true,
-        outputConfidenceMasks: false
-      });
+      try {
+        const vision = await tasksVision.FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+        );
+        
+        imageSegmenter = await tasksVision.ImageSegmenter.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+            delegate: "CPU" // CPU force la compatibilité universelle sur mobile (évite l'écran noir GPU)
+          },
+          runningMode: "VIDEO",
+          outputCategoryMask: true,
+          outputConfidenceMasks: false
+        });
+      } catch (err) {
+        console.error("Erreur d'initialisation du modèle Google IA:", err);
+      }
     }
     initialiserIAGoogle();
 
     async function lancerExperience(videoUrl) {
+      if (!imageSegmenter) {
+        alert("Le moteur d'intelligence artificielle est en cours de chargement. Veuillez patienter 2 secondes...");
+        return;
+      }
+
       const arOverlay = document.getElementById('ar-overlay');
       const cameraFeed = document.getElementById('camera-feed');
       const videoOverlay = document.getElementById('video-overlay');
@@ -239,7 +248,6 @@
 
       arOverlay.style.display = 'block';
 
-      // Accès direct à la caméra sans wrapper supplémentaire
       try {
         streamCamera = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
@@ -251,7 +259,7 @@
           demarrerBoucleRendu();
         };
       } catch (e) {
-        alert("Impossible d'accéder à la caméra");
+        alert("Impossible d'accéder à la caméra. Vérifiez les autorisations du navigateur.");
       }
     }
 
@@ -261,13 +269,15 @@
       const cameraFeed = document.getElementById('camera-feed');
 
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (streamCamera) streamCamera.getTracks().forEach(track => track.stop());
+      if (streamCamera) {
+        streamCamera.getTracks().forEach(track => track.stop());
+        streamCamera = null;
+      }
 
       videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
 
-    // BOUCLE TEMPS RÉEL DE DECOUPAGE ET COMPOSITING
     function demarrerBoucleRendu() {
       const canvas = document.getElementById('ar-canvas-render');
       const ctx = canvas.getContext('2d');
@@ -277,7 +287,7 @@
       let lastStartTimeMs = -1;
 
       async function renderFrame() {
-        if (cameraFeed.currentTime !== lastStartTimeMs && imageSegmenter) {
+        if (cameraFeed.readyState >= 2 && cameraFeed.currentTime !== lastStartTimeMs && imageSegmenter) {
           lastStartTimeMs = cameraFeed.currentTime;
           
           canvas.width = cameraFeed.videoWidth || 1280;
@@ -285,13 +295,12 @@
           const w = canvas.width;
           const h = canvas.height;
 
-          // Exécution de la segmentation WASM Google
           const startTimeMs = performance.now();
           imageSegmenter.segmentForVideo(cameraFeed, startTimeMs, (result) => {
             ctx.save();
             ctx.clearRect(0, 0, w, h);
 
-            // 1. Dessiner le fond (Vidéo d'archive)
+            // 1. Dessiner le fond (Vidéo historique)
             if (videoOverlay && videoOverlay.readyState >= 2) {
               ctx.drawImage(videoOverlay, 0, 0, w, h);
             } else {
@@ -299,43 +308,43 @@
               ctx.fillRect(0, 0, w, h);
             }
 
-            // 2. Extraire le masque d'isolation de la personne
+            // 2. Traiter la carte d'isolation de la personne
             const mask = result.categoryMask;
-            const maskArray = mask.getAsUint8Array();
+            if (mask) {
+              const maskArray = mask.getAsUint8Array();
 
-            // Créer le bitmap du masque avec adoucissement
-            const maskCanvas = document.createElement('canvas');
-            maskCanvas.width = mask.width;
-            maskCanvas.height = mask.height;
-            const maskCtx = maskCanvas.getContext('2d');
-            const maskImgData = maskCtx.createImageData(mask.width, mask.height);
+              const maskCanvas = document.createElement('canvas');
+              maskCanvas.width = mask.width;
+              maskCanvas.height = mask.height;
+              const maskCtx = maskCanvas.getContext('2d');
+              const maskImgData = maskCtx.createImageData(mask.width, mask.height);
 
-            for (let i = 0; i < maskArray.length; i++) {
-              // Si c'est la personne (Catégorie != 0), opacité à 255
-              const isPerson = maskArray[i] !== 0;
-              maskImgData.data[i * 4 + 3] = isPerson ? 255 : 0;
+              for (let i = 0; i < maskArray.length; i++) {
+                const isPerson = maskArray[i] !== 0;
+                maskImgData.data[i * 4 + 3] = isPerson ? 255 : 0;
+              }
+              maskCtx.putImageData(maskImgData, 0, 0);
+
+              // 3. Silhouette miroir
+              const personCanvas = document.createElement('canvas');
+              personCanvas.width = w;
+              personCanvas.height = h;
+              const personCtx = personCanvas.getContext('2d');
+
+              personCtx.save();
+              personCtx.translate(w, 0);
+              personCtx.scale(-1, 1);
+              personCtx.drawImage(cameraFeed, 0, 0, w, h);
+              personCtx.restore();
+
+              // Application du filtre doux sur le masque
+              personCtx.globalCompositeOperation = 'destination-in';
+              personCtx.filter = 'blur(2px)';
+              personCtx.drawImage(maskCanvas, 0, 0, w, h);
+
+              // 4. Inserer la personne au dessus du fond
+              ctx.drawImage(personCanvas, 0, 0);
             }
-            maskCtx.putImageData(maskImgData, 0, 0);
-
-            // 3. Dessiner la silhouette miroir de la personne sur un Canvas temporaire
-            const personCanvas = document.createElement('canvas');
-            personCanvas.width = w;
-            personCanvas.height = h;
-            const personCtx = personCanvas.getContext('2d');
-
-            personCtx.save();
-            personCtx.translate(w, 0);
-            personCtx.scale(-1, 1);
-            personCtx.drawImage(cameraFeed, 0, 0, w, h);
-            personCtx.restore();
-
-            // Application du masque adouci pour éviter les découpes dures sur les cheveux
-            personCtx.globalCompositeOperation = 'destination-in';
-            personCtx.filter = 'blur(3px)';
-            personCtx.drawImage(maskCanvas, 0, 0, w, h);
-
-            // 4. Fusionner la personne au-dessus de l'arrière-plan d'époque
-            ctx.drawImage(personCanvas, 0, 0);
             ctx.restore();
           });
         }

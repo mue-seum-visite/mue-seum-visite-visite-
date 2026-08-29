@@ -68,7 +68,6 @@
       margin-top: 6px;
     }
     
-    /* OVERLAY IMMERSION TOTALE */
     #ar-overlay {
       display: none;
       position: fixed;
@@ -79,7 +78,7 @@
       z-index: 99999;
     }
     
-    /* 1. Décor d'époque : Haute Définition, Détails & Contrastes intacts */
+    /* 1. Décor d'époque parfait et détaillé */
     #video-overlay {
       position: absolute;
       inset: 0;
@@ -87,26 +86,22 @@
       height: 100%;
       object-fit: cover;
       z-index: 1;
-      opacity: 1;
       filter: contrast(110%) brightness(95%);
     }
 
-    /* 2. Caméra utilisateur en temps réel */
+    /* 2. Caméra de retour selfie bien visible au-dessus du décor pour se placer facilement */
     #camera-feed {
-      display: none; /* Utilisé en mémoire pour la découpe */
-    }
-
-    /* 3. Zone de vue interactive en direct */
-    #live-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transform: scaleX(-1);
       z-index: 2;
+      opacity: 0.7; /* Permet de se voir NETTEMENT tout en apercevant le fond */
     }
 
-    /* 4. Photo finale capturée */
+    /* 3. Resultat final généré par l'IA */
     #ar-canvas-render {
       display: none;
       position: absolute;
@@ -171,6 +166,7 @@
       border: 1px solid #d4af37;
       font-weight: bold;
       z-index: 11;
+      text-align: center;
     }
   </style>
 </head>
@@ -188,13 +184,12 @@
     
     <video id="video-overlay" autoplay loop muted playsinline crossorigin="anonymous"></video>
     <video id="camera-feed" autoplay playsinline muted></video>
-    <canvas id="live-canvas"></canvas>
     <canvas id="ar-canvas-render"></canvas>
 
-    <div id="loader-badge">⏳ Incrustation dans l'époque...</div>
+    <div id="loader-badge">🤖 L'IA vous intègre dans le décor...</div>
 
     <div class="ar-controls">
-      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Capturer Photo</button>
+      <button class="btn-capture" id="btn-main" onclick="capturerPhotobooth()">📸 Prendre le Selfie</button>
       <button class="btn-capture" id="btn-retry" onclick="reprendrePhoto()" style="display: none;">🔄 Reprendre</button>
     </div>
   </div>
@@ -207,7 +202,6 @@
     let selfieSegmentation = null;
     let cameraStream = null;
     let photoPrise = false;
-    let animationFrameId = null;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -288,7 +282,6 @@
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       videoOverlay.pause();
       arOverlay.style.display = 'none';
     }
@@ -322,7 +315,7 @@
         ctx.save();
         ctx.clearRect(0, 0, renderCanvas.width, renderCanvas.height);
 
-        // 1. Fond historique en haute résolution avec contrastes poussés
+        // 1. Fond historique haute qualité
         if (videoOverlay && videoOverlay.readyState >= 2) {
           ctx.filter = "contrast(110%) brightness(95%)";
           ctx.drawImage(videoOverlay, 0, 0, renderCanvas.width, renderCanvas.height);
@@ -332,7 +325,7 @@
           ctx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
         }
 
-        // 2. Découpe nette du personnage sans détérioration du fond
+        // 2. Découpe et placement IA du personnage au premier plan
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = renderCanvas.width;
         tempCanvas.height = renderCanvas.height;
@@ -345,11 +338,14 @@
         tempCtx.scale(-1, 1);
         tempCtx.drawImage(results.image, 0, 0, renderCanvas.width, renderCanvas.height);
 
+        // Incrustation nette avec léger ajustement de luminosité pour l'harmoniser avec l'époque
+        ctx.filter = "contrast(105%) brightness(98%)";
         ctx.drawImage(tempCanvas, 0, 0);
+        ctx.filter = "none";
+
         ctx.restore();
 
-        // Affichage de la photo finale
-        document.getElementById('live-canvas').style.display = 'none';
+        cameraFeed.style.display = 'none';
         videoOverlay.style.display = 'none';
         renderCanvas.style.display = 'block';
         badge.style.display = 'none';
@@ -365,6 +361,7 @@
     }
 
     function reprendrePhoto() {
+      const cameraFeed = document.getElementById('camera-feed');
       const renderCanvas = document.getElementById('ar-canvas-render');
       const videoOverlay = document.getElementById('video-overlay');
       const btnMain = document.getElementById('btn-main');
@@ -372,10 +369,10 @@
 
       photoPrise = false;
       renderCanvas.style.display = 'none';
-      document.getElementById('live-canvas').style.display = 'block';
+      cameraFeed.style.display = 'block';
       videoOverlay.style.display = 'block';
 
-      btnMain.textContent = "📸 Capturer Photo";
+      btnMain.textContent = "📸 Prendre le Selfie";
       btnMain.style.backgroundColor = "#d4af37";
       btnMain.style.color = "#000000";
       btnRetry.style.display = "none";

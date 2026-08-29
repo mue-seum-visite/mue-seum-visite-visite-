@@ -65,6 +65,11 @@
       cursor: pointer;
       margin-top: 6px;
     }
+    .btn-ar:disabled {
+      background-color: #555;
+      color: #aaa;
+      cursor: not-allowed;
+    }
     #ar-overlay {
       display: none;
       position: fixed;
@@ -159,6 +164,7 @@
     let imageSegmenter = null;
     let streamCamera = null;
     let animFrameId = null;
+    let isIaReady = false;
 
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
@@ -192,7 +198,9 @@
           <div class="popup-content">
             <b>${pt.nom}</b><br>
             <p style="margin: 4px 0; font-size: 0.85rem;">${titreAnim}</p>
-            <button class="btn-ar" onclick="lancerExperience('${pt.video}')">📸 Lancer l'expérience</button>
+            <button class="btn-ar" id="btn-launch-ar" onclick="lancerExperience('${pt.video}')">
+              ${isIaReady ? "📸 Lancer l'expérience" : "⏳ Chargement IA..."}
+            </button>
           </div>
         `;
 
@@ -205,31 +213,49 @@
       }
     }
 
-    // INITIALISATION GOOGLE TASKS AVEC CPU POUR EVITER LE BLOCAGE ECRAN NOIR
+    // INITIALISATION ROBUSTE DE MEDIAPIPE VISION
     async function initialiserIAGoogle() {
       try {
-        const vision = await tasksVision.FilesetResolver.forVisionTasks(
+        // Résolution de l'objet global exposé par le CDN
+        const visionModule = window.tasksVision || window.Vision;
+
+        if (!visionModule) {
+          console.error("Le module Vision n'a pas pu être chargé depuis le CDN.");
+          return;
+        }
+
+        const vision = await visionModule.FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
         
-        imageSegmenter = await tasksVision.ImageSegmenter.createFromOptions(vision, {
+        imageSegmenter = await visionModule.ImageSegmenter.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-            delegate: "CPU" // CPU force la compatibilité universelle sur mobile (évite l'écran noir GPU)
+            delegate: "CPU"
           },
           runningMode: "VIDEO",
           outputCategoryMask: true,
           outputConfidenceMasks: false
         });
+
+        isIaReady = true;
+        
+        // Mise à jour visuelle des boutons de carte si ouverts
+        const btnAr = document.getElementById('btn-launch-ar');
+        if (btnAr) {
+          btnAr.textContent = "📸 Lancer l'expérience";
+        }
       } catch (err) {
-        console.error("Erreur d'initialisation du modèle Google IA:", err);
+        console.error("Erreur critique d'initialisation du modèle IA:", err);
       }
     }
-    initialiserIAGoogle();
+    
+    // Lancement au chargement de la fenêtre
+    window.addEventListener('load', initialiserIAGoogle);
 
     async function lancerExperience(videoUrl) {
-      if (!imageSegmenter) {
-        alert("Le moteur d'intelligence artificielle est en cours de chargement. Veuillez patienter 2 secondes...");
+      if (!isIaReady || !imageSegmenter) {
+        alert("Le moteur IA est toujours en cours de téléchargement depuis le réseau. Réessayez dans un instant.");
         return;
       }
 
@@ -259,14 +285,13 @@
           demarrerBoucleRendu();
         };
       } catch (e) {
-        alert("Impossible d'accéder à la caméra. Vérifiez les autorisations du navigateur.");
+        alert("Impossible d'accéder à la caméra. Autorisez l'accès à la caméra dans votre navigateur.");
       }
     }
 
     function fermerCamera() {
       const arOverlay = document.getElementById('ar-overlay');
       const videoOverlay = document.getElementById('video-overlay');
-      const cameraFeed = document.getElementById('camera-feed');
 
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (streamCamera) {
@@ -300,7 +325,7 @@
             ctx.save();
             ctx.clearRect(0, 0, w, h);
 
-            // 1. Dessiner le fond (Vidéo historique)
+            // 1. Décor d'époque
             if (videoOverlay && videoOverlay.readyState >= 2) {
               ctx.drawImage(videoOverlay, 0, 0, w, h);
             } else {
@@ -308,7 +333,7 @@
               ctx.fillRect(0, 0, w, h);
             }
 
-            // 2. Traiter la carte d'isolation de la personne
+            // 2. Traitement du masque
             const mask = result.categoryMask;
             if (mask) {
               const maskArray = mask.getAsUint8Array();
@@ -325,7 +350,7 @@
               }
               maskCtx.putImageData(maskImgData, 0, 0);
 
-              // 3. Silhouette miroir
+              // 3. Silhouette utilisateur
               const personCanvas = document.createElement('canvas');
               personCanvas.width = w;
               personCanvas.height = h;
@@ -337,12 +362,11 @@
               personCtx.drawImage(cameraFeed, 0, 0, w, h);
               personCtx.restore();
 
-              // Application du filtre doux sur le masque
               personCtx.globalCompositeOperation = 'destination-in';
               personCtx.filter = 'blur(2px)';
               personCtx.drawImage(maskCanvas, 0, 0, w, h);
 
-              // 4. Inserer la personne au dessus du fond
+              // 4. Composition finale
               ctx.drawImage(personCanvas, 0, 0);
             }
             ctx.restore();

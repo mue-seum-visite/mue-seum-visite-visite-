@@ -1,6 +1,6 @@
 {
   "id": 1,
-  "titre": "Charleroi 1911 : L'Épopée de l'Exposition Universelle",
+  "titre": "Charleroi 1911 : L'Épopée de l'Exposition",
   "lieu": "Charleroi, Hainaut",
   "dur": "2h 34min",
   "dist": "10,6 km",
@@ -9,10 +9,10 @@
   "points": [
     {
       "nom": "Square Jules Hiernaux",
-      "titre_animation": "Découvrir l'entrée de l'exposition universelle de 1911 à Charleroi",
+      "titre_animation": "Découvrir l'entrée de l'exposition  de 1911 à Charleroi",
       "lat": 50.4177758,
       "lng": 4.4506985,
-      "video": "screenrecording_08-20-2026 19-56-35_1.mov"
+      "video": "photos1 parcours1.mov"
     }
   ]
 }

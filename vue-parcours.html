@@ -192,6 +192,14 @@
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
 
+    // Sécurisation du retour navigateur (Option 1)
+    window.onpopstate = function(event) {
+      const arOverlay = document.getElementById('ar-overlay');
+      if (arOverlay && arOverlay.style.display === 'block') {
+        fermerExperience();
+      }
+    };
+
     if (!parcoursId) {
       document.getElementById('parcours-title').textContent = "Parcours introuvable";
     } else {
@@ -234,7 +242,10 @@
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
-      // Nettoyage de l'URL pour la détection du format (indépendant des paramètres ?v=1 et des majuscules)
+      // Ajout de l'état dans l'historique pour capturer la touche retour
+      history.pushState({ arOuvert: true }, "");
+
+      // Nettoyage de l'URL pour la détection du format (.mp4, .webm, .mov)
       const urlPropre = mediaUrl.split('?')[0].toLowerCase();
       isBgVideo = urlPropre.endsWith('.mp4') || urlPropre.endsWith('.webm') || urlPropre.endsWith('.mov');
 
@@ -303,7 +314,7 @@
       pCtx.drawImage(results.segmentationMask, 0, 0, w, h);
       pCtx.restore();
 
-      // 2. Rendu final
+      // 2. Rendu final du fond
       ctx.clearRect(0, 0, w, h);
 
       if (isBgVideo && bgVideoElement.readyState >= 2) {
@@ -315,7 +326,24 @@
         ctx.fillRect(0, 0, w, h);
       }
 
+      // 3. Superposition de la personne
       ctx.drawImage(personCanvas, 0, 0, w, h);
+
+      // 4. Incrustation dynamique de la marque MUE.SÉUM
+      const fontSize = Math.max(16, Math.round(w * 0.035));
+      ctx.save();
+      ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+
+      ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      ctx.fillStyle = "#d4af37";
+      ctx.fillText("✨ Souvenir MUE.SÉUM", w / 2, h - (h * 0.04));
+      ctx.restore();
     }
 
     function fermerExperience() {

@@ -1,6 +1,6 @@
 {
   "id": 1,
-  "titre": "Charleroi 1911 : L'Épopée de l'Exposition",
+  "titre": "Charleroi 1911 : L'Épopée de l'Exposition Internationale",
   "lieu": "Charleroi, Hainaut",
   "dur": "2h 34min",
   "dist": "10,6 km",
@@ -9,10 +9,17 @@
   "points": [
     {
       "nom": "Square Jules Hiernaux",
-      "titre_animation": "Découvrir l'entrée de l'exposition  de 1911 à Charleroi",
+      "titre_animation": "Découvrir l'entrée de l'exposition de 1911 à Charleroi",
       "lat": 50.4177758,
       "lng": 4.4506985,
       "video": "photos1 parcours1.mov"
+    },
+    {
+      "nom": "L'Allée des Pavillons (Boulevard Solvay)",
+      "titre_animation": "Vue d'ensemble des pavillons juste après l'arche d'entrée principale de l'Exposition Internationale de 1911",
+      "lat": 50.417431,
+      "lng": 4.449742,
+      "video": "photos2 parcours1.mov"
     }
   ]
 }

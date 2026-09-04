@@ -1,0 +1,18 @@
+{
+  "id": 2,
+  "titre": "Namur : Voyage à travers l'Histoire",
+  "lieu": "Namur, Capitale de la Wallonie",
+  "dur": "1h 45min",
+  "dist": "5,2 km",
+  "image": "Ima-5891.jeg.png",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4645144,4.8600211",
+  "points": [
+    {
+      "nom": "Point d'intérêt 1 - Namur",
+      "titre_animation": "Découvrir l'ambiance d'époque à cet emplacement historique",
+      "lat": 50.4645144,
+      "lng": 4.8600211,
+      "video": "photos1parcoures2.mov"
+    }
+  ]
+}

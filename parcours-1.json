@@ -12,21 +12,21 @@
       "titre_animation": "Découvrir l'entrée de l'exposition de 1911 à Charleroi",
       "lat": 50.4177758,
       "lng": 4.4506985,
-      "video": "photos1 parcours1.mov",
-      "bloque": false
+      "video": "photos1 parcours1.mov"
     },
     {
       "nom": "L'Allée des Pavillons (Boulevard Solvay)",
       "titre_animation": "Vue d'ensemble des pavillons juste après l'arche d'entrée principale de l'Exposition Internationale de 1911",
       "lat": 50.417431,
       "lng": 4.449742,
-      "video": "photos2 parcours1.mov",
-      "bloque": false
+      "video": "photos2 parcours1.mov"
     },
     {
       "nom": "Le Bâtiment Solvay (Palais des Beaux-Arts de 1911)",
       "titre_animation": "Lors de l'exposition de 1911, ce bâtiment abritait deux salons répartis en 24 salles : celui des arts anciens du Hainaut (œuvres de Hugo d'Oignies, Roger de La Pasture, Jacques Du Brœucq, Joachim Patinir, François-Joseph Navez, Jean-Baptiste Carpeaux, Constantin Meunier) et celui des arts modernes mettant à l'honneur Anna Boch, Victor Rousseau, Auguste Danse et le jeune Pierre Paulus. L'engouement suscité a permis l'émancipation culturelle de la classe ouvrière. Après l'exposition, inauguré le 28 mai, l'immeuble a accueilli les ateliers de l'Université du Travail avant d'être réhabilité en espace d'art contemporain. 👀 N'hésitez pas à jeter un œil : il y a peut-être quelque chose d'intéressant à découvrir à l'intérieur !",
       "lat": 50.4167163,
       "lng": 4.4462175,
-    
+      "video": ""
+    }
+  ]
 }

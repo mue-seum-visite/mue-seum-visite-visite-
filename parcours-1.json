@@ -27,6 +27,13 @@
       "lat": 50.4167163,
       "lng": 4.4462175,
       "video": ""
+    },
+    {
+      "nom": "Pavillon des Nations",
+      "titre_animation": "Sur le boulevard Solvay, menant aujourd'hui jusqu'au Palais des Beaux-Arts, se trouvaient plusieurs pavillons d'exposition comme celui-ci.",
+      "lat": 50.41611,
+      "lng": 4.446073,
+      "video": "photos3parcours1.mov"
     }
   ]
 }

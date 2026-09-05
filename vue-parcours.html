@@ -226,11 +226,17 @@
 
       points.forEach(pt => {
         const titreAnim = pt.titre_animation || pt.nom;
+        
+        // Affichage conditionnel du bouton : seulement si un nom de fichier vidéo est renseigné
+        const boutonHtml = (pt.video && pt.video.trim() !== '') 
+          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}')">🚀 Entrer dans l'époque</button>` 
+          : '';
+
         const contenuPopup = `
           <div class="popup-content">
             <b>${pt.nom}</b><br>
             <p style="margin: 4px 0; font-size: 0.85rem;">${titreAnim}</p>
-            <button class="btn-ar" onclick="lancerExperience('${pt.video}')">🚀 Entrer dans l'époque</button>
+            ${boutonHtml}
           </div>
         `;
 

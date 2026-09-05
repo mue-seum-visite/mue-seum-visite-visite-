@@ -34,6 +34,13 @@
       "lat": 50.41611,
       "lng": 4.446073,
       "video": "photos3parcours1.mov"
+    },
+    {
+      "nom": "Bâtiment Gramme",
+      "titre_animation": "Le bâtiment qui se tient devant vous est le bâtiment Gramme, qui est inauguré à l'occasion de l'Exposition internationale de 1911. C'est un édifice à la conception impressionnante et célébrant les métiers qui ont fait la prospérité de la région. Il y a peut-être de belles photos à prendre à l'intérieur, sait-on jamais.",
+      "lat": 50.416495,
+      "lng": 4.446738,
+      "video": ""
     }
   ]
 }

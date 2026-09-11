@@ -48,6 +48,13 @@
       "lat": 50.414678,
       "lng": 4.45141,
       "video": ""
+    },
+    {
+      "nom": "Brasserie Wallonne & Section Festive",
+      "titre_animation": "🍻 Ambiance festive de 1911 ! La brasserie Wallonne a été construite au cœur de la section festive, juste à proximité de la zone d'attractions. L'exposition s'étendait alors largement jusqu'au boulevard Joseph II, offrant divertissements et rafraîchissements aux milliers de visiteurs venus célébrer l'événement.",
+      "lat": 50.415033,
+      "lng": 4.451206,
+      "video": "photos4parcours1.mov"
     }
   ]
 }

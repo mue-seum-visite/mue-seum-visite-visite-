@@ -55,6 +55,13 @@
       "lat": 50.415033,
       "lng": 4.451206,
       "video": "photos4parcoures1.mov"
+    },
+    {
+      "nom": "Le Luna Garden",
+      "titre_animation": "🎡 Bienvenue au Luna Garden ! Ici, l'ambiance populaire battait son plein. 🤫 Regardez bien : un personnage s'avance vers vous avec un air intrigué... Elle semble se demander ce que vous faites là ! Attention à ne pas vous faire repérer, ce serait une véritable catastrophe !",
+      "lat": 50.415471,
+      "lng": 4.451678,
+      "video": "photos5parcours1.mov"
     }
   ]
 }

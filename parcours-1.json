@@ -10,15 +10,15 @@
     {
       "nom": "Square Jules Hiernaux",
       "titre_animation": "Découvrir l'entrée de l'exposition de 1911 à Charleroi",
-      "lat": 50.4177758,
-      "lng": 4.4506985,
+      "lat": 50.417491,
+      "lng": 4.449887,
       "video": "photos1 parcours1.mov"
     },
     {
       "nom": "L'Allée des Pavillons (Boulevard Solvay)",
       "titre_animation": "Vue d'ensemble des pavillons juste après l'arche d'entrée principale de l'Exposition Internationale de 1911",
-      "lat": 50.417431,
-      "lng": 4.449742,
+      "lat": 50.417382,
+      "lng": 4.449007,
       "video": "photos2 parcours1.mov"
     },
     {

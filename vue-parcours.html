@@ -207,14 +207,16 @@
         .then(res => res.json())
         .then(data => {
           document.getElementById('parcours-title').textContent = data.titre;
-          initialiserCarte(data.points);
+          // MODIFICATION : transmission de l'objet data complet (avec points et trace)
+          initialiserCarte(data);
         })
         .catch(() => {
           document.getElementById('parcours-title').textContent = "Erreur de chargement";
         });
     }
 
-    function initialiserCarte(points) {
+    function initialiserCarte(data) {
+      const points = data.points;
       if (!points || points.length === 0) return;
 
       const map = L.map('map').setView([points[0].lat, points[0].lng], 14);
@@ -223,6 +225,18 @@
         maxZoom: 19,
         attribution: '© OpenStreetMap'
       }).addTo(map);
+
+      // --- AJOUT : Dessin de la ligne du tracé si "trace" est présent ---
+      if (data.trace && data.trace.length > 0) {
+        const routePath = L.polyline(data.trace, {
+          color: '#d4af37',   // Couleur dorée assortie à votre charte MUE.SÉUM
+          weight: 4,          // Épaisseur de la ligne
+          opacity: 0.8,
+          dashArray: '8, 8'   // Ligne pointillée
+        }).addTo(map);
+
+        map.fitBounds(routePath.getBounds(), { padding: [40, 40] });
+      }
 
       points.forEach(pt => {
         const titreAnim = pt.titre_animation || pt.nom;

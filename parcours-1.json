@@ -6,6 +6,17 @@
   "dist": "10,6 km",
   "image": "IMG_5890.jpeg",
   "gps": "https://www.google.com/maps/search/?api=1&query=50.4122,4.4447",
+  "trace": [
+    [50.417491, 4.449887],
+    [50.417382, 4.449007],
+    [50.416630, 4.446325],
+    [50.416110, 4.446110],
+    [50.416459, 4.446700],
+    [50.415013, 4.451217],
+    [50.414685, 4.451410],
+    [50.415481, 4.451678],
+    [50.417491, 4.449887]
+  ],
   "points": [
     {
       "nom": "Square Jules Hiernaux",
@@ -15,7 +26,7 @@
       "video": "photos1 parcours1.mov"
     },
     {
-      "nom": "L'Allée des Pavillons ",
+      "nom": "L'Allée des Pavillons (Boulevard Solvay)",
       "titre_animation": "Vue d'ensemble des pavillons juste après l'arche d'entrée principale de l'Exposition Internationale de 1911",
       "lat": 50.417382,
       "lng": 4.449007,
@@ -51,7 +62,7 @@
     },
     {
       "nom": "Brasserie Wallonne & Section Festive",
-      "titre_animation": "🍻 Ambiance festive de 1911 ! La brasserie Wallonne a été construite au cœur de la section festive, juste à proximité de la zone d'attractions. L'exposition s'étendait alors largement jusqu'au boulevard Joseph II, offrant divertissements et rafraîchissements aux milliers de visiteurs venus célébrer l'événement.",
+      "titre_animation": "🍻 Ambiance festive de 1911 ! La brasserie Wallonne a été construite au cœur de la section festive, juste à proximité de la zone d'attractions. L'exposition s'étendait alors largement jusqu'au boulevard Joseph II, offrant divertissements et rafraîchissements aux visiteurs venus célébrer l'événement.",
       "lat": 50.415033,
       "lng": 4.451206,
       "video": "photos4parcoures1.mov"

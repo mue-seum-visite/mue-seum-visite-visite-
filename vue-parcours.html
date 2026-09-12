@@ -22,36 +22,6 @@
       overflow: hidden;
     }
 
-    .header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 10;
-    }
-    .btn-back {
-      background-color: #d4af37;
-      color: #000;
-      text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 0.85rem;
-    }
-    .title {
-      font-size: 1.05rem;
-      font-weight: bold;
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     #map {
       width: 100vw;
       height: 100vh;
@@ -148,11 +118,6 @@
 </head>
 <body>
 
-  <div class="header">
-    <a href="index.html" class="btn-back">⬅ Accueil</a>
-    <h1 id="parcours-title" class="title">Chargement...</h1>
-  </div>
-
   <div id="map"></div>
 
   <div id="ar-overlay">
@@ -205,17 +170,20 @@
     };
 
     if (!parcoursId) {
-      document.getElementById('parcours-title').textContent = "Parcours introuvable";
+      const titleEl = document.getElementById('parcours-title');
+      if (titleEl) titleEl.textContent = "Parcours introuvable";
     } else {
       fetch(`parcours-${parcoursId}.json`)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('parcours-title').textContent = data.titre;
+          const titleEl = document.getElementById('parcours-title');
+          if (titleEl) titleEl.textContent = data.titre;
           // MODIFICATION : transmission de l'objet data complet (avec points et trace)
           initialiserCarte(data);
         })
         .catch(() => {
-          document.getElementById('parcours-title').textContent = "Erreur de chargement";
+          const titleEl = document.getElementById('parcours-title');
+          if (titleEl) titleEl.textContent = "Erreur de chargement";
         });
     }
 
@@ -229,6 +197,51 @@
         maxZoom: 19,
         attribution: '© OpenStreetMap'
       }).addTo(map);
+
+      // --- AJOUT : Bouton fixe "Accueil" ---
+      const backControl = L.control({ position: 'topleft' });
+      backControl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        div.innerHTML = `
+          <a href="index.html" style="
+            background: #d4af37; 
+            color: #000000; 
+            text-decoration: none; 
+            padding: 8px 14px; 
+            display: inline-block;
+            font-weight: bold; 
+            font-size: 0.85rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          ">⬅ Accueil</a>
+        `;
+        return div;
+      };
+      backControl.addTo(map);
+
+      // --- AJOUT : Badge Titre en bas à gauche ---
+      const titleControl = L.control({ position: 'bottomleft' });
+      titleControl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        div.innerHTML = `
+          <div id="parcours-title" style="
+            background: rgba(0, 0, 0, 0.75); 
+            color: #ffffff; 
+            padding: 6px 12px; 
+            font-weight: bold; 
+            font-size: 0.9rem;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          ">${data.titre || 'Chargement...'}</div>
+        `;
+        return div;
+      };
+      titleControl.addTo(map);
 
       // --- AJOUT : Dessin de la ligne du tracé si "trace" est présent ---
       if (data.trace && data.trace.length > 0) {
@@ -276,7 +289,6 @@
             font-size: 0.85rem;
             border-radius: 4px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            margin-top: 60px; /* Décale le bouton sous le header */
           ">📍 Lancer le GPS</button>
         `;
         return div;

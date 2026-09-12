@@ -189,6 +189,10 @@
     let recordedChunks = [];
     let isRecording = false;
 
+    // Variables pour la géolocalisation GPS
+    let userMarker = null;
+    let isTracking = false;
+
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
 
@@ -255,6 +259,71 @@
         `;
 
         L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
+      });
+
+      // --- AJOUT : Bouton de contrôle GPS ---
+      const gpsControl = L.control({ position: 'topright' });
+      gpsControl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        div.innerHTML = `
+          <button id="btn-gps" style="
+            background: #ffffff; 
+            color: #000000; 
+            border: none; 
+            padding: 8px 12px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 0.85rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            margin-top: 60px; /* Décale le bouton sous le header */
+          ">📍 Lancer le GPS</button>
+        `;
+        return div;
+      };
+      gpsControl.addTo(map);
+
+      // Événement clic sur le bouton GPS
+      document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'btn-gps') {
+          if (!isTracking) {
+            map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
+            e.target.innerHTML = '🛑 Arrêter le GPS';
+            e.target.style.background = '#e74c3c';
+            e.target.style.color = '#ffffff';
+            isTracking = true;
+          } else {
+            map.stopLocate();
+            if (userMarker) {
+              map.removeLayer(userMarker);
+              userMarker = null;
+            }
+            e.target.innerHTML = '📍 Lancer le GPS';
+            e.target.style.background = '#ffffff';
+            e.target.style.color = '#000000';
+            isTracking = false;
+          }
+        }
+      });
+
+      // Mettre à jour la position de l'utilisateur (Point Rouge)
+      map.on('locationfound', function(e) {
+        if (!userMarker) {
+          userMarker = L.circleMarker(e.latlng, {
+            radius: 8,
+            fillColor: '#ff0000', // Point Rouge
+            color: '#ffffff',     // Contour blanc
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.9
+          }).addTo(map).bindPopup("Vous êtes ici");
+        } else {
+          userMarker.setLatLng(e.latlng);
+        }
+      });
+
+      map.on('locationerror', function() {
+        alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
     }
 

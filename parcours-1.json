@@ -12,9 +12,13 @@
     [50.416630, 4.446325],
     [50.416110, 4.446110],
     [50.416459, 4.446700],
+    [50.417050, 4.448500],
+    [50.417400, 4.449600],
+    [50.416600, 4.450400],
     [50.415013, 4.451217],
     [50.414685, 4.451410],
     [50.415481, 4.451678],
+    [50.416600, 4.451000],
     [50.417491, 4.449887]
   ],
   "points": [
@@ -34,7 +38,7 @@
     },
     {
       "nom": "Le Bâtiment Solvay (Palais des Beaux-Arts de 1911)",
-      "titre_animation": "Lors de l'exposition de 1911, ce bâtiment abritait deux salons répartis en 24 salles : celui des arts anciens du Hainaut (œuvres de Hugo d'Oignies, Roger de La Pasture, Jacques Du Brœucq, Joachim Patinir, François-Joseph Navez, Jean-Baptiste Carpeaux, Constantin Meunier) et celui des arts modernes mettant à l'honneur Anna Boch, Victor Rousseau, Auguste Danse et le jeune Pierre Paulus. L'engouement suscité a permis l'émancipation culturelle de la classe ouvrière. Après l'exposition, inauguré le 28 mai, l'immeuble a accueilli les ateliers de l'Université du Travail avant d'être réhabilité en espace d'art contemporain. 👀 N'hésitez pas à jeter un œil : il y a peut-être quelque chose d'intéressant à découvrir à l'intérieur !",
+      "titre_animation": "Lors de l'exposition de 1911, ce bâtiment abritait deux salons répartis en 24 salles : celui des arts anciens du Hainaut (œuvres de Hugo d'Oignies, Roger de La Pasture, Jacques Du Brœucq, Joachim Patinir, François-Joseph Navez, Jean-Baptiste Carpeaux, Constantin Meunier) et celui des arts modernes mettant à l'honneur Anna Boch, Victor Rousseau, Auguste Danse et le jeune Pierre Paulus. L'engouement suscité a permis l'émancipation culturelle de la classe ouvrière. Après l'exposition, inauguré le 28 mai, l'immeuble a accueilli me ateliers de l'Université du Travail avant d'être réhabilité en espace d'art contemporain. 👀 N'hésitez pas à jeter un œil : il y a peut-être quelque chose d'intéressant à découvrir à l'intérieur !",
       "lat": 50.4167163,
       "lng": 4.4462175,
       "video": ""

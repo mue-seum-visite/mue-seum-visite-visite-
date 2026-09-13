@@ -1,6 +1,6 @@
 {
   "id": 2,
-  "titre": "Namur : Voyage à travers l'Histoire",
+  "titre": "Namur : Voyage à travers l'Histoire Namuroise du XVIIIᵉ siècle",
   "lieu": "Namur, Capitale de la Wallonie",
   "dur": "1h 45min",
   "dist": "5,2 km",
@@ -8,8 +8,8 @@
   "gps": "https://www.google.com/maps/search/?api=1&query=50.4645144,4.8600211",
   "points": [
     {
-      "nom": "Point d'intérêt 1 - Namur",
-      "titre_animation": "Découvrir l'ambiance d'époque à cet emplacement historique",
+      "nom": "L’Écho de la Place Saint-Aubain",
+      "titre_animation": "Franchissez le seuil du temps et découvrez la majestueuse Place Saint-Aubain telle qu'elle s'animait au XVIIIᵉ siècle",
       "lat": 50.4645144,
       "lng": 4.8600211,
       "video": "photos1parcoures2.mov"

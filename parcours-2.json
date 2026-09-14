@@ -27,6 +27,13 @@
       "lat": 50.461694,
       "lng": 4.870459,
       "video": "photos3parcours2.mov"
+    },
+    {
+      "nom": "L’Équilibre des Hauteurs (XVIIIᵉ s.)",
+      "titre_animation": "Un élan d'audace s'empare des rues, oscillant au-dessus de la foule.",
+      "lat": 50.462357,
+      "lng": 4.865111,
+      "video": "photos4parcours2.mov"
     }
   ]
 }

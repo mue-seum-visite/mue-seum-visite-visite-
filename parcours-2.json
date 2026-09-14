@@ -20,6 +20,13 @@
       "lat": 50.4631583,
       "lng": 4.8674741,
       "video": "photos2parcours2.mov"
+    },
+    {
+      "nom": "Au Fil du Murmure entre Sambre et Meuse (XVIIIᵉ s.)",
+      "titre_animation": "Les fleuves contemplent les silhouettes qui les utilisent.",
+      "lat": 50.461694,
+      "lng": 4.870459,
+      "video": "photos3parcours2.mov"
     }
   ]
 }

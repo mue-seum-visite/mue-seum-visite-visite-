@@ -34,6 +34,13 @@
       "lat": 50.462357,
       "lng": 4.865111,
       "video": "photos4parcours2.mov"
+    },
+    {
+      "nom": "Les Ombres Nocturnes (XVIIIᵉ s.)",
+      "titre_animation": "Quand la nuit tombe, Namur dévoile ses plus beaux secrets.",
+      "lat": 50.461698,
+      "lng": 4.863716,
+      "video": "photos5parcour2.mov"
     }
   ]
 }

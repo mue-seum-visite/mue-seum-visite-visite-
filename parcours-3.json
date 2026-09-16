@@ -9,11 +9,11 @@
   "trace": [],
   "points": [
     {
-      "nom": "Point 1",
-      "titre_animation": "À définir",
+      "nom": "Le champ de bataille",
+      "titre_animation": "Bienvenue. Ici, vous vous trouvez sur le champ de bataille de Wavre. La bataille de Wavre opposa trois corps d'armée de l'Empire français commandés par le maréchal Grouchy à une arrière-garde prussienne sous les ordres de Johann von Thielmann, les 18 et 19 juin 1815. Bien qu'ils aient finalement été repoussés par les Français, les Prussiens résistent assez longtemps pour permettre à la principale armée prussienne commandée par Blücher d'aller secourir les forces de Wellington et ainsi triompher contre Napoléon Ier lors de la bataille de Waterloo.",
       "lat": 50.706029,
       "lng": 4.599495,
-      "video": "a_definir.mp4"
+      "video": "photos1parcours3.mov"
     }
   ]
 }

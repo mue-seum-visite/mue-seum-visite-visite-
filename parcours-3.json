@@ -14,6 +14,13 @@
       "lat": 50.706029,
       "lng": 4.599495,
       "video": "photos1parcours3.mov"
+    },
+    {
+      "nom": "L’Écho des Artilleurs (1815)",
+      "titre_animation": "Avancez à la rencontre des ombres de l'artillerie à pied française, là où le bronze forgeait le destin des batailles.",
+      "lat": 50.70593,
+      "lng": 4.599012,
+      "video": "photo2parcours3.mov"
     }
   ]
 }

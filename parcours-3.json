@@ -21,6 +21,13 @@
       "lat": 50.70593,
       "lng": 4.599012,
       "video": "photos2parcours3.mov"
+    },
+    {
+      "nom": "Monument au Général Gérard",
+      "titre_animation": "Ici s'élève la stèle rendant hommage au général Maurice-Étienne Gérard, commandant le 4ᵉ corps de l'armée française. Lors de la bataille de Wavre le 18 juin 1815, il mena de violents assauts pour franchir la Dyle au niveau du moulin de Bierges, où il fut grièvement blessé par une balle en menant ses troupes. Héros de l'Empire, il joua également plus tard un rôle important dans la défense de l'indépendance de la Belgique en 1831 lors de la campagne des Dix-Jours.",
+      "lat": 50.706124,
+      "lng": 4.599699,
+      "video": ""
     }
   ]
 }

@@ -77,7 +77,7 @@
     },
     {
       "nom": "Jonction et suite du parcours",
-      "titre_animation": "Vous voici au terme de cette étape. N'oubliez pas de poursuivre votre aventure dans Wavre",
+      "titre_animation": "Vous voici au terme de cette première section ! Pour rejoindre la suite du parcours au Pont du Christ dans le centre de Wavre, cliquez sur ce lien de guidage GPS : https://www.google.com/maps/dir/?api=1&destination=50.7147642,4.6106094",
       "lat": 50.706152,
       "lng": 4.599566,
       "video": ""

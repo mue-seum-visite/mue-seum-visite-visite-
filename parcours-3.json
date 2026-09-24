@@ -1,9 +1,9 @@
 {
   "id": 3,
-  "titre": "La bataille de Wavre",
+  "titre": "La bataille de Wavre (2 parties)",
   "lieu": "Wavre",
-  "dur": "10 min",
-  "dist": "0,2 km",
+  "dur": "Partie 1 : 10 min | Partie 2 : 15 min",
+  "dist": "Partie 1 : 200 m | Partie 2 : 1 km",
   "image": "Ima-5892.jpeg",
   "gps": "https://www.google.com/maps/search/?api=1&query=50.706029,4.599495",
   "trace": [
@@ -63,8 +63,8 @@
   ],
   "points": [
     {
-      "nom": "Le champ de bataille",
-      "titre_animation": "Bienvenue. Ici, vous vous trouvez sur le champ de bataille de Wavre. La bataille de Wavre opposa trois corps d'armée de l'Empire français commandés par le maréchal Grouchy à une arrière-garde prussienne sous les ordres de Johann von Thielmann, les 18 et 19 juin 1815. Bien qu'ils aient finalement été repoussés par les Français, les Prussiens résistent assez longtemps pour permettre à la principale armée prussienne commandée par Blücher d'aller secourir les forces de Wellington et ainsi triompher contre Napoléon Ier lors de la bataille de Waterloo.",
+      "nom": "Le champ de bataille (Partie 1)",
+      "titre_animation": "Bienvenue. Ici, vous vous trouvez sur le champ de bataille de Wavre (Partie 1 : 200 m). La bataille de Wavre opposa trois corps d'armée de l'Empire français commandés par le maréchal Grouchy à une arrière-garde prussienne sous les ordres de Johann von Thielmann, les 18 et 19 juin 1815. Bien qu'ils aient finalement été repoussés par les Français, les Prussiens résistent assez longtemps pour permettre à la principale armée prussienne commandée par Blücher d'aller secourir les forces de Wellington et ainsi triompher contre Napoléon Ier lors de la bataille de Waterloo.",
       "lat": 50.706029,
       "lng": 4.599495,
       "video": "photos1parcours3.mov"
@@ -91,8 +91,8 @@
       "video": "photos3parcours3.mov"
     },
     {
-      "nom": "Le Pont du Christ et le cœur de Wavre",
-      "titre_animation": "Alors que le destin de l'Empire se scellait à Waterloo, les combats se sont poursuivis avec une violence inouïe au centre du village de Wavre. Ici même, sur le Pont du Christ enjambant la Dyle, Français et Prussiens se disputèrent frénétiquement le passage lors de sanglants affrontements rapprochés.",
+      "nom": "Le Pont du Christ et le cœur de Wavre (Partie 2)",
+      "titre_animation": "Bienvenue dans la 2ᵉ partie du parcours en centre-ville (Partie 2 : 1 km, ~15 min). Alors que le destin de l'Empire se scellait à Waterloo, les combats se sont poursuivis avec une violence inouïe au centre du village de Wavre. Ici même, sur le Pont du Christ enjambant la Dyle, Français et Prussiens se disputèrent frénétiquement le passage lors de sanglants affrontements rapprochés.",
       "lat": 50.7147642,
       "lng": 4.6106094,
       "video": "photos4parcours3.mov"
@@ -106,7 +106,7 @@
     },
     {
       "nom": "Jonction et suite du parcours",
-      "titre_animation": "Vous avez terminé la première partie sur le champ de bataille.<br><a class=\"btn-gps-link\" href=\"https://www.google.com/maps/dir/?api=1&destination=50.7147642,4.6106094\" target=\"_blank\">🗺️ Guider vers le Pont du Christ</a>",
+      "titre_animation": "Vous avez terminé la première partie sur le champ de bataille (200 m).<br><a class=\"btn-gps-link\" href=\"https://www.google.com/maps/dir/?api=1&destination=50.7147642,4.6106094\" target=\"_blank\">🗺️ Guider vers la Partie 2 (Pont du Christ)</a>",
       "lat": 50.706152,
       "lng": 4.599566,
       "video": ""

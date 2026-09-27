@@ -391,9 +391,10 @@
       }
 
       try {
+        // Demande de la caméra uniquement (audio: false pour éviter le blocage du navigateur intégré Facebook)
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: true
+          audio: false
         });
         videoElement.srcObject = cameraStream;
         await videoElement.play();
@@ -401,7 +402,7 @@
         isProcessing = true;
         processVideo();
       } catch (err) {
-        alert("Impossible d'accéder à la caméra ou au micro : " + err.message);
+        alert("Impossible d'accéder à la caméra : " + err.message);
       }
     }
 
@@ -511,7 +512,7 @@
       return '';
     }
 
-    function basculerEnregistrement() {
+    async function basculerEnregistrement() {
       const btnRec = document.getElementById('btn-rec');
       
       if (isRecording) {
@@ -524,9 +525,14 @@
         const mimeType = obtenirMimeTypeVideo();
         const canvasStream = canvasElement.captureStream(30);
 
-        // Ajout du flux audio de la caméra/micro à la vidéo enregistrée
-        if (cameraStream && cameraStream.getAudioTracks().length > 0) {
-          canvasStream.addTrack(cameraStream.getAudioTracks()[0]);
+        // Capture de l'audio optionnel au moment de filmer
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (audioStream && audioStream.getAudioTracks().length > 0) {
+            canvasStream.addTrack(audioStream.getAudioTracks()[0]);
+          }
+        } catch (audioErr) {
+          console.log("Audio non disponible ou refusé, enregistrement vidéo seul :", audioErr);
         }
 
         try {

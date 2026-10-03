@@ -1,1 +1,15 @@
-
+{
+  "id": 4,
+  "titre": "Parcours 4 (En construction)",
+  "lieu": "Namur",
+  "dur": "30 min",
+  "dist": "2 km",
+  "image": "ima-5893.WEBP",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4433891,4.8671177",
+  "etapes": [
+    {
+      "titre": "En cours de création ⏳",
+      "description": "Ce parcours est actuellement en construction. Revenez très bientôt pour découvrir cette nouvelle balade !"
+    }
+  ]
+}

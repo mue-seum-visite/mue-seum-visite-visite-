@@ -271,10 +271,11 @@
 
       points.forEach(pt => {
         const titreAnim = pt.titre_animation || pt.nom;
+        const avecSon = pt.avec_son ? true : false;
         
         // Affichage conditionnel du bouton : seulement si un nom de fichier vidéo est renseigné
         const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}')">🚀 Entrer dans l'époque</button>` 
+          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
           : '';
 
         const contenuPopup = `
@@ -353,7 +354,7 @@
       });
     }
 
-    async function lancerExperience(mediaUrl) {
+    async function lancerExperience(mediaUrl, avecSon = false) {
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
@@ -367,6 +368,10 @@
       if (isBgVideo) {
         bgVideoElement.src = mediaUrl;
         bgVideoElement.currentTime = 0;
+        
+        // Gestion dynamique du son : muet par défaut, sonore si avecSon est vrai
+        bgVideoElement.muted = !avecSon;
+
         try {
           await bgVideoElement.play();
         } catch (err) {

@@ -8,31 +8,4 @@
   "gps": "https://www.google.com/maps/search/?api=1&query=50.443752,4.865452",
   "trace": [],
   "points": [
-    {
-      "nom": "La Pierre du Diable",
-      "titre_animation": "Ce mégalithe préhistorique est exceptionnel car il représente un des témoignages les plus méridionaux de la « culture des gobelets à entonnoirs ». Il fut détruit en 1820 par le propriétaire de la maison voisine qui avait besoin de pierres pour sa grange.",
-      "lat": 50.443752,
-      "lng": 4.865452,
-      "video": "photos1parcours4.mov",
-      "avec_son": true
-    },
-    {
-      "nom": "La Pierre de Brunehaut",
-      "titre_animation": "Mentionné dès 1273 sous le nom de « pierre », ce dolmen fut plus tard attribué à la Reine Brunehaut. Selon la légende médiévale, cette reine magicienne aurait construit en une seule nuit les grands monuments et routes de nos régions, faisant de ce mégalithe sa sépulture.",
-      "lat": 50.443793,
-      "lng": 4.865195,
-      "video": "photos2parcours4.mov",
-      "avec_son": false
-    }
-  ],
-  "etapes": [
-    {
-      "titre": "La Pierre du Diable 🗿",
-      "description": "Découverte de ce témoignage de la culture des gobelets à entonnoirs."
-    },
-    {
-      "titre": "La Pierre de Brunehaut 👑",
-      "description": "Découverte des noms historiques du dolmen et de la légende médiévale de la reine magicienne Brunehaut."
-    }
-  ]
-}
+  

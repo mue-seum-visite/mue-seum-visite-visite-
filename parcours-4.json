@@ -9,8 +9,8 @@
   "trace": [],
   "points": [
     {
-      "nom": "La Pierre du Diable",
-      "titre_animation": "Ce mégalithe préhistorique est exceptionnel car il représente un des témoignages les plus méridionaux de la « culture des gobelets à entonnoirs ». Il fut détruit en 1820 par le propriétaire de la maison voisine qui avait besoin de pierres pour sa grange.",
+      "nom": "La Pierre des Origines",
+      "titre_animation": "Ce mégalithe préhistorique est un témoignage exceptionnel de la « culture des gobelets à entonnoirs » (Néolithique). Il est resté intact jusqu'en 1820, date à laquelle le propriétaire voisin l'a partiellement détruit pour en utiliser les pierres pour sa grange.",
       "lat": 50.443752,
       "lng": 4.865452,
       "video": "photos1parcours4.mov",
@@ -18,7 +18,7 @@
     },
     {
       "nom": "La Pierre de Brunehaut",
-      "titre_animation": "Mentionné dès 1273 sous le nom de « pierre », ce dolmen fut plus tard attribué à la Reine Brunehaut. Selon la légende médiévale, cette reine magicienne aurait construit en une seule nuit les grands monuments et routes de nos régions, faisant de ce mégalithe sa sépulture.",
+      "titre_animation": "Mentionné dès 1273 sous le nom de « pierre », ce dolmen fut plus tard attribué à la Reine Brunehaut. Selon la légende médiévale, cette reine magicienne aurait construit en une seule nuit les grands monuments et voies de nos régions pour y installer sa sépulture.",
       "lat": 50.443793,
       "lng": 4.865195,
       "video": "photos2parcours4.MOV",
@@ -26,36 +26,18 @@
     },
     {
       "nom": "La Pierre du Diable et saint Materne",
-      "titre_animation": "Vers 1740, le dolmen est appelé « Pierre du Diable ». Selon la légende de 1694, saint Materne y aurait retiré la statuette du dieu païen Nam pour convertir les habitants. Une chapelle dédiée au saint y fut accolée avant d'être détruite par un ouragan en 1880.",
+      "titre_animation": "Vers 1740, le site prend le nom de « Pierre du Diable ». Selon la légende de 1694, saint Materne y aurait retiré la statuette du dieu païen Nam pour convertir les habitants. Une chapelle dédiée au saint y fut adossée avant d'être détruite par un ouragan en 1880.",
       "lat": 50.443882,
       "lng": 4.86483,
       "video": "photos3parcours4.MOV",
       "avec_son": true
     },
     {
-      "nom": "La Maison de la Pierre du Diable (N° 404, Rue de Dave)",
-      "titre_animation": "La maison d’aujourd’hui, située au n° 404 de la Rue de Dave, est la seule survivance du dolmen dont elle tire son nom. Sa façade présente une pierre de 1798 blasonnée aux armes d’Espagne martelée sous la Révolution française, ainsi qu'un bas-relief de deux nymphes encadrant un Christ bénissant. On y observe aussi une croix incrustée au mur arrière, témoignant de l'utilisation de pierres tombales voisines pour sa construction.",
+      "nom": "Les Vestiges de la Pierre (N° 404, Rue de Dave)",
+      "titre_animation": "La maison située au n° 404 de la Rue de Dave est la dernière mémoire du dolmen dont elle tire son nom. Sa façade présente une pierre de 1798 blasonnée aux armes d’Espagne martelée sous la Révolution française, un bas-relief de deux nymphes encadrant un Christ bénissant, ainsi qu'une croix incrustée au mur arrière, témoignant du réemploi des matériaux du site.",
       "lat": 50.444104,
       "lng": 4.867389,
       "video": ""
-    }
-  ],
-  "etapes": [
-    {
-      "titre": "La Pierre du Diable 🗿",
-      "description": "Découverte de ce témoignage de la culture des gobelets à entonnoirs."
-    },
-    {
-      "titre": "La Pierre de Brunehaut 👑",
-      "description": "Découverte des noms historiques du dolmen et de la légende médiévale de la reine magicienne Brunehaut."
-    },
-    {
-      "titre": "La Pierre du Diable et saint Materne ⛪",
-      "description": "Légende de la conversion du site par saint Materne et l'histoire de sa chapelle."
-    },
-    {
-      "titre": "La Maison de la Pierre du Diable 🏛️",
-      "description": "Présentation des éléments architecturaux au n° 404 de la Rue de Dave."
     }
   ]
 }

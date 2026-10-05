@@ -33,17 +33,10 @@
       "avec_son": true
     },
     {
-      "nom": "Jonction vers la Maison de la Pierre du Diable",
-      "titre_animation": "Vous avez terminé la partie historique sur les légendes du dolmen.<br><a class=\"btn-gps-link\" href=\"https://www.google.com/maps/dir/?api=1&destination=50.453177,4.869481\" target=\"_blank\">🗺️ Guider vers la Maison de la Pierre du Diable</a>",
-      "lat": 50.443862,
-      "lng": 4.864798,
-      "video": ""
-    },
-    {
       "nom": "La Maison de la Pierre du Diable (N° 404, Rue de Dave)",
       "titre_animation": "La maison d’aujourd’hui, située au n° 404 de la Rue de Dave, est la seule survivance du dolmen dont elle tire son nom. Sa façade présente une pierre de 1798 blasonnée aux armes d’Espagne martelée sous la Révolution française, ainsi qu'un bas-relief de deux nymphes encadrant un Christ bénissant. On y observe aussi une croix incrustée au mur arrière, témoignant de l'utilisation de pierres tombales voisines pour sa construction.",
-      "lat": 50.453177,
-      "lng": 4.869481,
+      "lat": 50.444104,
+      "lng": 4.867389,
       "video": ""
     }
   ],
@@ -59,10 +52,6 @@
     {
       "titre": "La Pierre du Diable et saint Materne ⛪",
       "description": "Légende de la conversion du site par saint Materne et l'histoire de sa chapelle."
-    },
-    {
-      "titre": "Jonction et guidage 🚶‍♂️",
-      "description": "Lien d'itinéraire pour rejoindre la suite du parcours."
     },
     {
       "titre": "La Maison de la Pierre du Diable 🏛️",

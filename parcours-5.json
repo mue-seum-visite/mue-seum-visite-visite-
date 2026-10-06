@@ -1,0 +1,20 @@
+{
+  "id": 5,
+  "titre": "Décor Vidéo - Séquence Fictive",
+  "lieu": "Studio",
+  "dur": "5 min",
+  "dist": "0 km",
+  "image": "ima-5893.WEBP",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.443752,4.865452",
+  "trace": [],
+  "points": [
+    {
+      "nom": "Point Fictif Tournage",
+      "titre_animation": "Animation de fond pour la séquence vidéo.",
+      "lat": 50.443752,
+      "lng": 4.865452,
+      "video": "decor1parcours5.MOV",
+      "avec_son": true
+    }
+  ]
+}

@@ -9,7 +9,19 @@
   <!-- Chargement de MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
-  <!-- Script de comptage GoatCounter -->
+  <!-- Configuration et chargement de GoatCounter -->
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id') || 'inconnu';
+      window.goatcounter = {
+        path: '/parcours-' + id,
+        title: 'Parcours ' + id,
+        allow_frame: true,
+        allow_local: true
+      };
+    })();
+  </script>
   <script data-goatcounter="https://mue-seum.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
 

@@ -15,6 +15,14 @@
       "lng": 14.4848,
       "video": "photos1parcours5.mp4",
       "avec_son": true
+    },
+    {
+      "nom": "L'entraînement",
+      "titre_animation": "Observez les méthodes de préparation et le quotidien des gladiateurs romains dans la ludus, restitués en réalité augmentée.",
+      "lat": 40.7495,
+      "lng": 14.4855,
+      "video": "photos2parcours5.mp4",
+      "avec_son": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "id": 5,
-  "titre": "Pompéi (Disponible à partir du 14 octobre 2026)",
+  "titre": "Pompéi ",
   "lieu": "Pompéi",
   "dur": "15 min",
   "dist": "1 km",
@@ -9,8 +9,8 @@
   "trace": [],
   "points": [
     {
-      "nom": "Entrée dans votre pays",
-      "titre_animation": "Plongez au cœur de l'histoire antique et découvrez les vestiges fascinants de Pompéi en réalité augmentée à travers votre smartphone.",
+      "nom": "Entrée ",
+      "titre_animation": "Plongez au cœur de l'histoire antique et  fascinants de Pompéi .",
       "lat": 40.7489,
       "lng": 14.4848,
       "video": "photos1parcours5.mp4",
@@ -26,7 +26,7 @@
     },
     {
       "nom": "La promenade du Duumvir",
-      "titre_animation": "Croisez le magistrat ou figure d'autorité de la cité déambulant sur le Forum, veillant à la gestion publique et à la vie citoyenne de Pompéi.",
+      "titre_animation": "Croisez le magistrat ou figure d'autorité de la cité déambulant dans la rue, veillant à la gestion publique et à la vie citoyenne de Pompéi.",
       "lat": 40.7502,
       "lng": 14.4862,
       "video": "photos3parcours5.mp4",
@@ -47,6 +47,14 @@
       "lng": 14.4878,
       "video": "photos5parcours5.mp4",
       "avec_son": false
+    },
+    {
+      "nom": "Volcan en éruption",
+      "titre_animation": "Vivez le moment cataclysmique où le Vésuve se déchaîne au-dessus de Pompéi, faisant trembler la cité sous une pluie de cendres et de roches dans un cataclysme retentissant.",
+      "lat": 40.7500,
+      "lng": 14.4860,
+      "video": "photos6parcours5.mp4",
+      "avec_son": true
     }
   ]
 }

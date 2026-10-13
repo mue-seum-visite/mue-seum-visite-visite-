@@ -39,6 +39,14 @@
       "lng": 14.4870,
       "video": "photos4parcours5.mp4",
       "avec_son": false
+    },
+    {
+      "nom": "La Villa des Mystères",
+      "titre_animation": "Pénétrez dans cette prestigieuse demeure suburbaine pour admirer ses fresques murales remarquables et découvrir les rituels secrets de l'Antiquité.",
+      "lat": 40.7514,
+      "lng": 14.4878,
+      "video": "photos5parcours5.mp4",
+      "avec_son": false
     }
   ]
 }

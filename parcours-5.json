@@ -2,10 +2,19 @@
   "id": 5,
   "titre": "Pompéi (Disponible à partir du 14 octobre 2026)",
   "lieu": "Pompéi",
-  "dur": "--",
-  "dist": "--",
+  "dur": "15 min",
+  "dist": "1 km",
   "image": "ima.5894.jpg",
   "gps": "https://www.google.com/maps/search/?api=1&query=40.7489,14.4848",
   "trace": [],
-  "points": []
+  "points": [
+    {
+      "nom": "Entrée dans votre pays",
+      "titre_animation": "Plongez au cœur de l'histoire antique et découvrez les vestiges fascinants de Pompéi en réalité augmentée à travers votre smartphone.",
+      "lat": 40.7489,
+      "lng": 14.4848,
+      "video": "photos1parcours5.mp4",
+      "avec_son": true
+    }
+  ]
 }

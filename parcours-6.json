@@ -1,0 +1,20 @@
+{
+  "id": 6,
+  "titre": "Sur les pas de Shakespeare : Le théâtre des illusions",
+  "lieu": "Londres",
+  "dur": "15 min",
+  "dist": "1 km",
+  "image": "ima.5895.jpg",
+  "gps": "https://www.google.com/maps/search/?api=1&query=51.5081,-0.0972",
+  "trace": [],
+  "points": [
+    {
+      "nom": "Le Globe de Globe : Dans l'ombre du Barde",
+      "titre_animation": "Marchez sur les planches du célèbre Globe Theatre où Shakespeare créa ses chefs-d'œuvre et plongez au cœur d'un décor élisabéthain restitué en réalité augmentée.",
+      "lat": 51.5081,
+      "lng": -0.0972,
+      "video": "photos1parcours6.mp4",
+      "avec_son": true
+    }
+  ]
+}

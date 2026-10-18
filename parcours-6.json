@@ -1,6 +1,6 @@
 {
   "id": 6,
-  "titre": "Sur les pas de Shakespeare : Le théâtre des illusions",
+  "titre": "L'Écho des Passions : Tirades du Théâtre Élisabéthain",
   "lieu": "Londres",
   "dur": "15 min",
   "dist": "1 km",
@@ -9,8 +9,8 @@
   "trace": [],
   "points": [
     {
-      "nom": "Le Globe de Globe : Dans l'ombre du Barde",
-      "titre_animation": "Marchez sur les planches du célèbre Globe Theatre où Shakespeare créa ses chefs-d'œuvre et plongez au cœur d'un décor élisabéthain restitué en réalité augmentée.",
+      "nom": "Le Baiser de l'Enfer et du Paradis",
+      "titre_animation": "« Si je devais t'embrasser pour aller ensuite en enfer, je le ferai : je pourrai ainsi me vanter auprès des démons d'avoir aperçu le paradis sans jamais y être entré. » Découvrez cette tirade passionnée, interprétée au cœur d'un décor de théâtre baroque élisabéthain.",
       "lat": 51.5081,
       "lng": -0.0972,
       "video": "photos1parcours6.mp4",

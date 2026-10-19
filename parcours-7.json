@@ -1,0 +1,20 @@
+{
+  "id": 7,
+  "titre": "Viens découvrir l'anecdote de cette statue de Constantin Meunier",
+  "lieu": "Charleroi",
+  "dur": "10 min",
+  "dist": "500 m",
+  "image": "ima.5896.jpg",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.406651,4.439228",
+  "trace": [],
+  "points": [
+    {
+      "nom": "La Revanche de Charleroi : L'histoire des statues 'manquées'",
+      "titre_animation": "Saviez-vous que cette statue n'aurait jamais dû être une copie ? Bien que Constantin Meunier se soit inspiré du labeur du Pays Noir pour son célèbre Monument au Travail, le projet original a été attribué à Bruxelles (Laeken) ! Privée de son hommage, la Ville de Charleroi a décidé de faire exécuter ses propres copies en bronze pour enfin célébrer ses mineurs et forgerons sur ses propres ponts.",
+      "lat": 50.406651,
+      "lng": 4.439228,
+      "video": "ima.5896.jpg",
+      "avec_son": true
+    }
+  ]
+}

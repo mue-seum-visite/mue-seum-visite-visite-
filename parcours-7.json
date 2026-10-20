@@ -2,8 +2,8 @@
   "id": 7,
   "titre": "Statues & Chef-d'œuvre : L'Histoire Sculptée de Charleroi",
   "lieu": "Charleroi",
-  "dur": "10 min",
-  "dist": "500 m",
+  "dur": "20 min",
+  "dist": "1.2 km",
   "image": "ima.5899.jpg",
   "gps": "https://www.google.com/maps/search/?api=1&query=50.406651,4.439228",
   "trace": [],
@@ -14,6 +14,14 @@
       "lat": 50.406651,
       "lng": 4.439228,
       "video": "ima.5896.jpg",
+      "avec_son": true
+    },
+    {
+      "nom": "Le Pigeon Soldat : Petit Héros des Cieux",
+      "titre_animation": "Inauguré le 11 novembre 1951 à l'initiative des 'Amis du Pigeon Soldat', ce mémorial du parc Reine Astrid (boulevard Defontaine) rend hommage aux pigeons messagers de la Résistance qui ont sauvé tant de vies durant les guerres. Créée par l'artiste Alphonse Darville, la statue originale en bronze représentant l'oiseau prenant son envol a été tristement volée en 2008 et est aujourd'hui remplacée par une copie. Il n'existe que deux autres monuments de ce type au monde : à Bruxelles et à Lille !",
+      "lat": 50.40983033,
+      "lng": 4.44651783,
+      "video": "photos2parcour7.jpg",
       "avec_son": true
     }
   ]

@@ -2,8 +2,8 @@
   "id": 7,
   "titre": "Statues & Chef-d'œuvre : L'Histoire Sculptée de Charleroi",
   "lieu": "Charleroi",
-  "dur": "20 min",
-  "dist": "1.2 km",
+  "dur": "30 min",
+  "dist": "2.0 km",
   "image": "ima.5899.jpg",
   "gps": "https://www.google.com/maps/search/?api=1&query=50.406651,4.439228",
   "trace": [],
@@ -13,7 +13,7 @@
       "titre_animation": "Saviez-vous que cette statue n'aurait jamais dû être une copie ? Bien que Constantin Meunier (1831-1905) se soit inspiré du labeur du Pays Noir dès les années 1880 pour imaginer son célèbre Monument au Travail, le projet original a finalement été inauguré à Bruxelles (Laeken) en 1930. Privée de son hommage, la Ville de Charleroi a décidé en 1937 de faire exécuter ses propres copies en bronze pour enfin célébrer ses mineurs et forgerons sur ses propres ponts.",
       "lat": 50.406651,
       "lng": 4.439228,
-      "video": "ima.5896.jpg",
+      "video": "ima.5899.jpg",
       "avec_son": true
     },
     {
@@ -22,6 +22,14 @@
       "lat": 50.40983033,
       "lng": 4.44651783,
       "video": "photos2parcour7.jpg",
+      "avec_son": true
+    },
+    {
+      "nom": "L'Îlot des Sciences : Le Rond-Point qui Tourne Tout Seul",
+      "titre_animation": "Inauguré en 2002 , ce rond-point abrite une sculpture mobile signée Sandrine Devos. Sa flèche métallique tourne lentement dans le sens copernicien pour symboliser un monde en perpétuelle évolution. Elle rend hommage aux génies de la région : Georges Lemaître (père du Big Bang), Julien Dulait (pionnier de l'électricité et d'ACEC), Ernest Solvay (chimie industrielle), ainsi qu'Émile Gobbe et Émile Fourcault (inventeurs du tirage mécanique du verre étiré). Après près de 20 ans d'immobilité, la Confrérie du Doigt d'Alzon l'a remise en rotation en mai 2024 !",
+      "lat": 50.4158,
+      "lng": 4.4485,
+      "video": "photos3parcours7.mp4",
       "avec_son": true
     }
   ]

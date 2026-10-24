@@ -1,1 +1,21 @@
 
+{
+  "id": 8,
+  "titre": "Découvertes & Patrimoine : Les Secrets Masqués de Charleroi",
+  "lieu": "Charleroi",
+  "dur": "15 min",
+  "dist": "800 m",
+  "image": "bfea2c95-e3b1-4936-a714-a68b089291a4.jpg",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.410000,4.444000",
+  "trace": [],
+  "points": [
+    {
+      "nom": "Mystères de Charleroi : L'Enigme Sculptée",
+      "titre_animation": "Chaque statue de Charleroi cache une histoire fascinante. Saviez-vous que cette œuvre renferme un détail méconnu que la plupart des passants ne remarquent jamais ? Prenez le temps de l'observer et découvrez le secret de sa création !",
+      "lat": 50.410000,
+      "lng": 4.444000,
+      "video": "bfea2c95-e3b1-4936-a714-a68b089291a4.jpg",
+      "avec_son": true
+    }
+  ]
+}

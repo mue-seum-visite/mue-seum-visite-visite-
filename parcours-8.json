@@ -1,7 +1,7 @@
 
 {
   "id": 8,
-  "titre": "Découvertes & Patrimoine : Les Secrets Masqués de Charleroi",
+  "titre": "Le Petit Théâtre de la Ruelle",
   "lieu": "Charleroi",
   "dur": "15 min",
   "dist": "800 m",
@@ -10,8 +10,8 @@
   "trace": [],
   "points": [
     {
-      "nom": "Mystères de Charleroi : L'Enigme Sculptée",
-      "titre_animation": "Chaque statue de Charleroi cache une histoire fascinante. Saviez-vous que cette œuvre renferme un détail méconnu que la plupart des passants ne remarquent jamais ? Prenez le temps de l'observer et découvrez le secret de sa création !",
+      "nom": "Grand Spectacle dans une Petite Ruelle",
+      "titre_animation": ""Niché au cœur de Lodelinsart, ce théâtre intime est une véritable pépite culturelle ! Porté par la passion de sa troupe et l'esprit chaleureux des 'Molières et Mocassins', ce lieu prouve qu'il n'y a pas besoin de grands halls pour vivre d'immenses émotions théâtrales. Un incontournable du patrimoine vivant carolo !",
       "lat": 50.410000,
       "lng": 4.444000,
       "video": "bfea2c95-e3b1-4936-a714-a68b089291a4.jpg",

@@ -4,7 +4,7 @@
   "lieu": "Belgique Parcours en Travaux : Ouverture le Mercredi 28 Octobre ",
   "dur": "20 min",
   "dist": "1.2 km",
-  "image": "ima.5895jpg.",
+  "image": "ima.5895.jpg",
   "gps": "https://www.google.com/maps/search/?api=1&query=50.4744,3.6492",
   "trace": [],
   "points": [
@@ -13,7 +13,7 @@
       "titre_animation": "Ce parcours fait actuellement peau neuve ! Nous préparons une aventure fascinante sur les traces des dinosaures découverts en Belgique, à la rencontre des célèbres iguanodons et des trésors paléontologiques de notre région. Le parcours sera officiellement disponible le mercredi 28 octobre. Rendez-vous très bientôt pour remonter le temps !",
       "lat": 50.4744,
       "lng": 3.6492,
-      "video": "ima.5895jpg",
+      "video": "ima.5895.jpg",
       "avec_son": true
     }
   ]

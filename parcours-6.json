@@ -1,19 +1,19 @@
 {
   "id": 6,
-  "titre": "L'Écho des Passions : Tirades du Théâtre Élisabéthain",
-  "lieu": "Londres",
-  "dur": "15 min",
-  "dist": "1 km",
-  "image": "ima.5895.jpg",
-  "gps": "https://www.google.com/maps/search/?api=1&query=51.5081,-0.0972",
+  "titre": "Les Géants Disparus : Les Dinosaures de Belgique",
+  "lieu": "Belgique Parcours en Travaux : Ouverture le Mercredi 28 Octobre ",
+  "dur": "20 min",
+  "dist": "1.2 km",
+  "image": "ima.5895jpg.",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4744,3.6492",
   "trace": [],
   "points": [
     {
-      "nom": "Le Baiser de l'Enfer et du Paradis",
-      "titre_animation": "« Si je devais t'embrasser pour aller ensuite en enfer, je le ferai : je pourrai ainsi me vanter auprès des démons d'avoir aperçu le paradis sans jamais y être entré. » Découvrez cette tirade passionnée, interprétée au cœur d'un décor de théâtre baroque élisabéthain.",
-      "lat": 51.5081,
-      "lng": -0.0972,
-      "video": "photos1parcours6.mp4",
+      "nom": "Parcours en Travaux : Ouverture le Mercredi 28 Octobre",
+      "titre_animation": "Ce parcours fait actuellement peau neuve ! Nous préparons une aventure fascinante sur les traces des dinosaures découverts en Belgique, à la rencontre des célèbres iguanodons et des trésors paléontologiques de notre région. Le parcours sera officiellement disponible le mercredi 28 octobre. Rendez-vous très bientôt pour remonter le temps !",
+      "lat": 50.4744,
+      "lng": 3.6492,
+      "video": "ima.5895jpg",
       "avec_son": true
     }
   ]

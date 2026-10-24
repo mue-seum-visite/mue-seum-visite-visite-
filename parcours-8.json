@@ -5,14 +5,14 @@
   "dur": "15 min",
   "dist": "800 m",
   "image": "bfea2c95-e3b1-4936-a714-a68b089291a4.jpg",
-  "gps": "https://www.google.com/maps/search/?api=1&query=50.410000,4.444000",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4309682,4.4476093",
   "trace": [],
   "points": [
     {
       "nom": "Grand Spectacle dans une Petite Ruelle",
       "titre_animation": "Niché au cœur de Lodelinsart, ce théâtre intime est une véritable pépite culturelle ! Porté par la passion de sa troupe et l'esprit chaleureux des 'Molières et Mocassins', ce lieu prouve qu'il n'y a pas besoin de grands halls pour vivre d'immenses émotions théâtrales. Un incontournable du patrimoine vivant carolo !",
-      "lat": 50.410000,
-      "lng": 4.444000,
+      "lat": 50.4309682,
+      "lng": 4.4476093,
       "video": "bfea2c95-e3b1-4936-a714-a68b089291a4.jpg",
       "avec_son": true
     }

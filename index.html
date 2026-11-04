@@ -124,7 +124,7 @@
       margin-top: 30px;
     }
 
-    /* --- STYLES DU GUIDE / INFOBULLES ONBOARDING --- */
+    /* --- STYLES DU GUIDE PAR INFOBULLES FLOTTANTES (POPOVER) --- */
     .btn-help-icon {
       position: absolute;
       right: 0;
@@ -138,54 +138,54 @@
       font-weight: bold;
       cursor: pointer;
     }
+    
     .onboarding-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.45); /* Fond assombri légèrement sans flou pour garder l'arrière-plan lisible */
+      background: rgba(0, 0, 0, 0.4);
       z-index: 9999;
       display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 20px;
-      box-sizing: border-box;
-      pointer-events: none; /* Permet la lisibilité sans bloquer l'interaction visuelle */
+      pointer-events: none;
     }
-    .onboarding-card {
+
+    /* Bulle d'aide positionnée dynamiquement près du bouton/composant */
+    .onboarding-tooltip {
+      position: absolute;
       background: #1e1e1e;
-      border: 2px solid #d4af37;
-      border-radius: 16px;
-      padding: 20px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-      animation: slideUp 0.3s ease-out;
-      pointer-events: auto; /* Reconnecte les événements pour pouvoir cliquer sur "Suivant" / "Ignorer" */
+      border: 2px solid #ff2a2a; /* Bordure rouge dynamique */
+      border-radius: 12px;
+      padding: 14px;
+      width: calc(100% - 40px);
+      max-width: 320px;
+      box-shadow: 0 8px 25px rgba(255, 42, 42, 0.3), 0 5px 15px rgba(0,0,0,0.8);
+      z-index: 10001;
+      pointer-events: auto;
+      box-sizing: border-box;
+      transition: all 0.25s ease;
     }
-    @keyframes slideUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
+
     .onboarding-step-badge {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #d4af37;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
     .onboarding-title {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      color: #ffffff;
     }
     .onboarding-text {
-      font-size: 0.9rem;
-      color: #cccccc;
-      line-height: 1.4;
-      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: #dddddd;
+      line-height: 1.35;
+      margin-bottom: 12px;
     }
     .onboarding-actions {
       display: flex;
@@ -196,7 +196,7 @@
       background: transparent;
       border: none;
       color: #888888;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       text-decoration: underline;
     }
@@ -204,19 +204,20 @@
       background: #d4af37;
       color: #000;
       border: none;
-      padding: 8px 18px;
-      border-radius: 20px;
+      padding: 6px 14px;
+      border-radius: 16px;
       font-weight: bold;
+      font-size: 0.85rem;
       cursor: pointer;
     }
 
-    /* ENTOURAGE ROUGE VIF ET MISE AU PREMIER PLAN */
+    /* ENTOURAGE ET HIGHLIGHT DU BOUTON / COMPOSANT CIBLE */
     .highlight-guide {
       position: relative !important;
       z-index: 10000 !important;
-      outline: 4px solid #ff2a2a !important; /* Contour rouge vif hyper visible */
-      outline-offset: 4px !important;
-      box-shadow: 0 0 20px rgba(255, 42, 42, 0.8) !important; /* Halo lumineux rouge */
+      outline: 3px solid #ff2a2a !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 15px rgba(255, 42, 42, 0.7) !important;
       transition: all 0.2s ease-in-out;
     }
   </style>
@@ -240,14 +241,14 @@
 
   <div id="container-parcours"></div>
 
-  <!-- COMPOSANT MODALE D'AIDE GUIDÉE -->
+  <!-- COMPOSANT OVERLAY & INFOBULLE D'AIDE -->
   <div id="onboarding-overlay" class="onboarding-overlay">
-    <div class="onboarding-card">
+    <div id="onboarding-tooltip" class="onboarding-tooltip">
       <div id="onboarding-badge" class="onboarding-step-badge">Étape 1 / 3</div>
       <div id="onboarding-title" class="onboarding-title">Titre</div>
       <div id="onboarding-text" class="onboarding-text">Texte explicatif...</div>
       <div class="onboarding-actions">
-        <button class="btn-skip" onclick="fermerAide()">Ignorer le guide</button>
+        <button class="btn-skip" onclick="fermerAide()">Ignorer</button>
         <button id="btn-next-step" class="btn-next" onclick="etapeSuivante()">Suivant</button>
       </div>
     </div>
@@ -271,9 +272,9 @@
       parcoursData = resultats.filter(item => item !== null);
       afficherParcours(parcoursData);
 
-      // Lancement automatique du guide à la première visite après affichage
+      // Lancement automatique instantané à la première visite
       if (!localStorage.getItem('mueseum_accueil_guided_seen')) {
-        setTimeout(() => demarrerAide(false), 600);
+        demarrerAide(false);
       }
     });
 
@@ -315,25 +316,25 @@
       }
     }
 
-    // --- GESTION DU GUIDE / TUTORIEL PAS À PAS ---
+    // --- GESTION DU GUIDE PAR INFOBULLES ANCRÉES ---
     let etapeActuelle = 0;
     const etapesGuide = [
       {
         badge: "Étape 1 / 3 — Bienvenue",
-        title: "Choisissez votre mode d'exploration 🗺️",
-        text: "MUE.SÉUM s'utilise **sur le terrain OU directement depuis chez vous** ! Parcourez les vignettes ci-dessous pour choisir votre balade.",
+        title: "Explorez à votre rythme 🗺️",
+        text: "MUE.SÉUM s'utilise **sur le terrain OU directement depuis chez vous** ! Choisissez la vignette de la balade qui vous intéresse.",
         targetClass: "route-card"
       },
       {
         badge: "Étape 2 / 3 — Sur le terrain",
         title: "Bouton « Me rendre à la balade » 📍",
-        text: "Vous souhaitez vivre l'expérience sur place ? Ce bouton (entouré en rouge) lance votre application GPS ( Google Maps) pour vous guider jusqu'au point de départ.",
+        text: "Pour vivre la balade sur place, ce bouton lance le trajet GPS (Google Maps, Waze...) jusqu'au point de départ.",
         targetClass: "btn-gps"
       },
       {
         badge: "Étape 3 / 3 — Lancement",
         title: "Bouton « Découvrir ce parcours » 🥾",
-        text: "Que vous soyez sur place ou confortablement installé chez vous, cliquez sur ce bouton (entouré en rouge) pour ouvrir la carte interactive et remonter le temps !",
+        text: "Que vous soyez **sur place ou chez vous**, ce bouton ouvre la carte interactive pour lancer l'aventure !",
         targetClass: "btn-discover"
       }
     ];
@@ -342,7 +343,7 @@
       if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
       etapeActuelle = 0;
       afficherEtapeGuide();
-      document.getElementById('onboarding-overlay').style.display = 'flex';
+      document.getElementById('onboarding-overlay').style.display = 'block';
     }
 
     function afficherEtapeGuide() {
@@ -354,16 +355,32 @@
       document.getElementById('onboarding-text').innerText = config.text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
       const btnNext = document.getElementById('btn-next-step');
-      if (etapeActuelle === etapesGuide.length - 1) {
-        btnNext.innerText = "C'est compris !";
-      } else {
-        btnNext.innerText = "Suivant";
-      }
+      btnNext.innerText = (etapeActuelle === etapesGuide.length - 1) ? "C'est compris !" : "Suivant";
 
       const elTarget = document.querySelector('.' + config.targetClass);
       if (elTarget) {
         elTarget.classList.add('highlight-guide');
         elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Calcul du positionnement dynamique de l'infobulle à côté de l'élément sans masquage
+        setTimeout(() => {
+          const rect = elTarget.getBoundingClientRect();
+          const tooltip = document.getElementById('onboarding-tooltip');
+          
+          // Alignement horizontal (centré)
+          let leftPos = rect.left + (rect.width / 2) - 160;
+          if (leftPos < 20) leftPos = 20;
+          if (leftPos + 320 > window.innerWidth) leftPos = window.innerWidth - 340;
+
+          // Alignement vertical : en-dessous si assez de place, sinon au-dessus
+          let topPos = rect.bottom + window.scrollY + 12;
+          if (rect.bottom + 180 > window.innerHeight) {
+            topPos = rect.top + window.scrollY - 170;
+          }
+
+          tooltip.style.left = leftPos + 'px';
+          tooltip.style.top = topPos + 'px';
+        }, 300);
       }
     }
 
@@ -381,6 +398,12 @@
       document.getElementById('onboarding-overlay').style.display = 'none';
       localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
+
+    window.addEventListener('resize', () => {
+      if (document.getElementById('onboarding-overlay').style.display === 'block') {
+        afficherEtapeGuide();
+      }
+    });
   </script>
 
 </body>

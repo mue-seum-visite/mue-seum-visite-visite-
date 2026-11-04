@@ -1,0 +1,20 @@
+{
+  "id": 9,
+  "titre": "Statues & Chef-d'œuvre : L'Histoire Sculptée de Namur",
+  "lieu": "Namur",
+  "dur": "30 min",
+  "dist": "2.0 km",
+  "image": "photos1parcours9.jpg",
+  "gps": "https://www.google.com/maps/search/?api=1&query=50.4610322,4.8667749",
+  "trace": [],
+  "points": [
+    {
+      "nom": "Searching for Utopia : La tortue géante de Jan Fabre",
+      "titre_animation": "Présentée à Namur du 14 mars au 30 août 2015 lors d'une grande exposition temporaire, cette œuvre monumentale de Jan Fabre (né en 1958) a été pensée pour faire dialoguer à travers le temps l'artiste flamand avec l'artiste wallon Félicien Rops (1833-1898). Le cavalier posé sur la tortue n'est autre qu'un autoportrait de Jan Fabre lui-même. Face au panorama de la Citadelle, la tortue avance avec une détermination lente mais inébranlable, incarnant la quête permanente d'une utopie et invitant chaque passant à s'interroger sur son propre voyage.",
+      "lat": 50.4610322,
+      "lng": 4.8667749,
+      "video": "photos1parcours9.jpg",
+      "avec_son": true
+    }
+  ]
+}

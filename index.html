@@ -124,7 +124,7 @@
       margin-top: 30px;
     }
 
-    /* --- STYLES DES INFOBULLES LÉGÈRES STYLE DESSIN ANIMÉ / BD --- */
+    /* --- STYLES DU GUIDE FLUIDE ET FIXE EN HAUT --- */
     .btn-help-icon {
       position: absolute;
       right: 0;
@@ -137,6 +137,7 @@
       height: 32px;
       font-weight: bold;
       cursor: pointer;
+      z-index: 10002;
     }
     
     .onboarding-overlay {
@@ -145,62 +146,48 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.4);
       z-index: 9999;
       display: none;
       pointer-events: none;
     }
 
-    /* La petite bulle BD ultra-fluide */
-    .comic-bubble {
-      position: absolute;
-      background: #1e1e1e;
+    /* Bulle d'Aide Haut de Page - Style BD moderne et épuré */
+    .top-guide-bubble {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 30px);
+      max-width: 360px;
+      background: #1c1c1e;
       border: 2px solid #d4af37;
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 12px 16px;
-      width: calc(100% - 40px);
-      max-width: 290px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.8), 0 0 10px rgba(212, 175, 55, 0.3);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.9);
       z-index: 10001;
       pointer-events: auto;
       box-sizing: border-box;
-      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* Pointe de bulle BD (Flèche) */
-    .comic-bubble::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
-    }
-    
-    /* Flèche pointant vers le bas */
-    .comic-bubble.arrow-bottom::after {
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 10px 10px 0 10px;
-      border-color: #d4af37 transparent transparent transparent;
+    @keyframes popIn {
+      from { opacity: 0; transform: translate(-50%, -15px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
     }
 
-    /* Flèche pointant vers le haut */
-    .comic-bubble.arrow-top::after {
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 0 10px 10px 10px;
-      border-color: transparent transparent #d4af37 transparent;
+    .bubble-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
     }
-
     .bubble-badge {
-      font-size: 0.65rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #d4af37;
       font-weight: bold;
-      margin-bottom: 2px;
     }
     .bubble-title {
       font-size: 0.95rem;
@@ -209,9 +196,9 @@
       color: #ffffff;
     }
     .bubble-text {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: #dddddd;
-      line-height: 1.3;
+      line-height: 1.35;
       margin-bottom: 10px;
     }
     .bubble-actions {
@@ -223,7 +210,7 @@
       background: transparent;
       border: none;
       color: #888888;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       cursor: pointer;
       text-decoration: underline;
     }
@@ -231,21 +218,20 @@
       background: #d4af37;
       color: #000;
       border: none;
-      padding: 5px 12px;
-      border-radius: 12px;
+      padding: 6px 14px;
+      border-radius: 14px;
       font-weight: bold;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       cursor: pointer;
     }
 
-    /* SURBRILLANCE ROUGE COMPACTE DE L'ÉLÉMENT CIBLÉ */
+    /* Cadre Rouge Vif Dynamique sur l'élément ciblée */
     .highlight-guide {
       position: relative !important;
       z-index: 10000 !important;
       outline: 3px solid #ff2a2a !important;
       outline-offset: 3px !important;
-      box-shadow: 0 0 12px rgba(255, 42, 42, 0.7) !important;
-      transition: all 0.2s ease-in-out;
+      box-shadow: 0 0 15px rgba(255, 42, 42, 0.8) !important;
     }
   </style>
 </head>
@@ -268,10 +254,12 @@
 
   <div id="container-parcours"></div>
 
-  <!-- OVERLAY + BULLE BD -->
+  <!-- OVERLAY & BULLE FIXE EN HAUT -->
   <div id="onboarding-overlay" class="onboarding-overlay">
-    <div id="comic-bubble" class="comic-bubble arrow-top">
-      <div id="bubble-badge" class="bubble-badge">Étape 1 / 3</div>
+    <div id="top-guide-bubble" class="top-guide-bubble">
+      <div class="bubble-header">
+        <span id="bubble-badge" class="bubble-badge">Étape 1 / 3</span>
+      </div>
       <div id="bubble-title" class="bubble-title">Titre</div>
       <div id="bubble-text" class="bubble-text">Texte explicatif...</div>
       <div class="bubble-actions">
@@ -284,10 +272,8 @@
   <script>
     let parcoursData = [];
 
-    // Génération automatique des noms de fichiers de parcours-1.json à parcours-60.json
     const listeFichiers = Array.from({ length: 60 }, (_, i) => `parcours-${i + 1}.json`);
 
-    // Chargement dynamique de chaque fichier individuel s'il existe
     Promise.all(
       listeFichiers.map(fichier => 
         fetch(fichier)
@@ -295,11 +281,9 @@
           .catch(() => null)
       )
     ).then(resultats => {
-      // Filtrer pour garder uniquement les parcours réellement créés
       parcoursData = resultats.filter(item => item !== null);
       afficherParcours(parcoursData);
 
-      // Lancement automatique instantané à la première visite
       if (!localStorage.getItem('mueseum_accueil_guided_seen')) {
         demarrerAide(false);
       }
@@ -343,25 +327,25 @@
       }
     }
 
-    // --- GESTION DU GUIDE INFOBULLE BD ---
+    // --- GESTION DU GUIDE GUIDÉ PAS À PAS ---
     let etapeActuelle = 0;
     const etapesGuide = [
       {
-        badge: "Étape 1 / 3",
+        badge: "Étape 1 / 3 — Bienvenue",
         title: "Explorez votre choix 🗺️",
-        text: "MUE.SÉUM marche <b>sur place OU au chaud chez vous</b> ! Choisissez votre parcours.",
+        text: "MUE.SÉUM fonctionne <b>sur le terrain OU au chaud chez vous</b> ! Choisissez la carte de votre balade.",
         targetClass: "route-card"
       },
       {
-        badge: "Étape 2 / 3",
-        title: "Sur le terrain 📍",
-        text: "Pour aller au départ, ce bouton lance votre trajet GPS.",
+        badge: "Étape 2 / 3 — Trajet",
+        title: "Bouton « Me rendre à la balade » 📍",
+        text: "Pour aller au point de départ, ce bouton entouré en rouge lance votre itinéraire GPS.",
         targetClass: "btn-gps"
       },
       {
-        badge: "Étape 3 / 3",
-        title: "C'est parti ! 🥾",
-        text: "Sur place ou chez vous, cliquez ici pour lancer la carte interactive !",
+        badge: "Étape 3 / 3 — Lancement",
+        title: "Bouton « Découvrir ce parcours » 🥾",
+        text: "Sur place ou chez vous, ce bouton entouré en rouge lance la carte interactive !",
         targetClass: "btn-discover"
       }
     ];
@@ -387,28 +371,11 @@
       const elTarget = document.querySelector('.' + config.targetClass);
       if (elTarget) {
         elTarget.classList.add('highlight-guide');
-        elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Calcul exact de la position de la bulle BD
+        
+        // Défilement doux qui place l'élément bien dégagé au centre, sous la bulle fixe
         setTimeout(() => {
-          const rect = elTarget.getBoundingClientRect();
-          const bubble = document.getElementById('comic-bubble');
-          
-          // Horizontale (Centrée sur l'écran)
-          let leftPos = (window.innerWidth - bubble.offsetWidth) / 2;
-          bubble.style.left = leftPos + 'px';
-
-          // Verticale (Positionnée en haut ou en bas avec pointeur)
-          if (rect.top > 160) {
-            // Placer AU DESSUS de l'élément cible
-            bubble.style.top = (rect.top + window.scrollY - bubble.offsetHeight - 12) + 'px';
-            bubble.className = "comic-bubble arrow-bottom";
-          } else {
-            // Placer EN DESSOUS de l'élément cible
-            bubble.style.top = (rect.bottom + window.scrollY + 12) + 'px';
-            bubble.className = "comic-bubble arrow-top";
-          }
-        }, 300);
+          elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
       }
     }
 
@@ -426,12 +393,6 @@
       document.getElementById('onboarding-overlay').style.display = 'none';
       localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
-
-    window.addEventListener('resize', () => {
-      if (document.getElementById('onboarding-overlay').style.display === 'block') {
-        afficherEtapeGuide();
-      }
-    });
   </script>
 
 </body>

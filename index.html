@@ -144,14 +144,14 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.45); /* Fond assombri légèrement sans flou pour garder l'arrière-plan lisible */
       z-index: 9999;
       display: none;
       align-items: flex-end;
       justify-content: center;
       padding: 20px;
       box-sizing: border-box;
+      pointer-events: none; /* Permet la lisibilité sans bloquer l'interaction visuelle */
     }
     .onboarding-card {
       background: #1e1e1e;
@@ -160,8 +160,9 @@
       padding: 20px;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
       animation: slideUp 0.3s ease-out;
+      pointer-events: auto; /* Reconnecte les événements pour pouvoir cliquer sur "Suivant" / "Ignorer" */
     }
     @keyframes slideUp {
       from { transform: translateY(50px); opacity: 0; }
@@ -208,10 +209,15 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+    /* ENTOURAGE ROUGE VIF ET MISE AU PREMIER PLAN */
     .highlight-guide {
-      outline: 3px solid #d4af37 !important;
-      outline-offset: 4px;
-      border-radius: 12px;
+      position: relative !important;
+      z-index: 10000 !important;
+      outline: 4px solid #ff2a2a !important; /* Contour rouge vif hyper visible */
+      outline-offset: 4px !important;
+      box-shadow: 0 0 20px rgba(255, 42, 42, 0.8) !important; /* Halo lumineux rouge */
+      transition: all 0.2s ease-in-out;
     }
   </style>
 </head>
@@ -321,13 +327,13 @@
       {
         badge: "Étape 2 / 3 — Sur le terrain",
         title: "Bouton « Me rendre à la balade » 📍",
-        text: "Vous souhaitez vivre l'expérience sur place ? Ce bouton lance votre application GPS (Waze, Google Maps...) pour vous guider jusqu'au point de départ.",
+        text: "Vous souhaitez vivre l'expérience sur place ? Ce bouton (entouré en rouge) lance votre application GPS ( Google Maps) pour vous guider jusqu'au point de départ.",
         targetClass: "btn-gps"
       },
       {
         badge: "Étape 3 / 3 — Lancement",
         title: "Bouton « Découvrir ce parcours » 🥾",
-        text: "Que vous soyez **sur place ou confortablement installé chez vous**, cliquez ici pour ouvrir la carte interactive et remonter le temps !",
+        text: "Que vous soyez sur place ou confortablement installé chez vous, cliquez sur ce bouton (entouré en rouge) pour ouvrir la carte interactive et remonter le temps !",
         targetClass: "btn-discover"
       }
     ];

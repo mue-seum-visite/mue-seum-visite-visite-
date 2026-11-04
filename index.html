@@ -21,6 +21,7 @@
     .header {
       text-align: center;
       margin-bottom: 20px;
+      position: relative;
     }
     .title {
       font-size: 2.2rem;
@@ -122,6 +123,96 @@
       color: #777;
       margin-top: 30px;
     }
+
+    /* --- STYLES DU GUIDE / INFOBULLES ONBOARDING --- */
+    .btn-help-icon {
+      position: absolute;
+      right: 0;
+      top: 5px;
+      background: #2a2a2a;
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .onboarding-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .onboarding-card {
+      background: #1e1e1e;
+      border: 2px solid #d4af37;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .onboarding-step-badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #d4af37;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .onboarding-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .onboarding-text {
+      font-size: 0.9rem;
+      color: #cccccc;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .onboarding-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-skip {
+      background: transparent;
+      border: none;
+      color: #888888;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .btn-next {
+      background: #d4af37;
+      color: #000;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .highlight-guide {
+      outline: 3px solid #d4af37 !important;
+      outline-offset: 4px;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body>
@@ -129,6 +220,7 @@
   <div class="header">
     <h1 class="title">MUE.<span>SÉUM</span></h1>
     <div class="subtitle">Machine à remonter le temps</div>
+    <button class="btn-help-icon" onclick="demarrerAide(true)" title="Revoir le guide">?</button>
   </div>
 
   <div class="search-bar">
@@ -141,6 +233,19 @@
   </div>
 
   <div id="container-parcours"></div>
+
+  <!-- COMPOSANT MODALE D'AIDE GUIDÉE -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    <div class="onboarding-card">
+      <div id="onboarding-badge" class="onboarding-step-badge">Étape 1 / 3</div>
+      <div id="onboarding-title" class="onboarding-title">Titre</div>
+      <div id="onboarding-text" class="onboarding-text">Texte explicatif...</div>
+      <div class="onboarding-actions">
+        <button class="btn-skip" onclick="fermerAide()">Ignorer le guide</button>
+        <button id="btn-next-step" class="btn-next" onclick="etapeSuivante()">Suivant</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let parcoursData = [];
@@ -159,6 +264,11 @@
       // Filtrer pour garder uniquement les parcours réellement créés
       parcoursData = resultats.filter(item => item !== null);
       afficherParcours(parcoursData);
+
+      // Lancement automatique du guide à la première visite après affichage
+      if (!localStorage.getItem('mueseum_accueil_guided_seen')) {
+        setTimeout(() => demarrerAide(false), 600);
+      }
     });
 
     function afficherParcours(liste) {
@@ -197,6 +307,73 @@
         parcoursData.push(parcoursData.shift());
         filtrerParcours();
       }
+    }
+
+    // --- GESTION DU GUIDE / TUTORIEL PAS À PAS ---
+    let etapeActuelle = 0;
+    const etapesGuide = [
+      {
+        badge: "Étape 1 / 3 — Bienvenue",
+        title: "Choisissez votre mode d'exploration 🗺️",
+        text: "MUE.SÉUM s'utilise **sur le terrain OU directement depuis chez vous** ! Parcourez les vignettes ci-dessous pour choisir votre balade.",
+        targetClass: "route-card"
+      },
+      {
+        badge: "Étape 2 / 3 — Sur le terrain",
+        title: "Bouton « Me rendre à la balade » 📍",
+        text: "Vous souhaitez vivre l'expérience sur place ? Ce bouton lance votre application GPS (Waze, Google Maps...) pour vous guider jusqu'au point de départ.",
+        targetClass: "btn-gps"
+      },
+      {
+        badge: "Étape 3 / 3 — Lancement",
+        title: "Bouton « Découvrir ce parcours » 🥾",
+        text: "Que vous soyez **sur place ou confortablement installé chez vous**, cliquez ici pour ouvrir la carte interactive et remonter le temps !",
+        targetClass: "btn-discover"
+      }
+    ];
+
+    function demarrerAide(force) {
+      if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
+      etapeActuelle = 0;
+      afficherEtapeGuide();
+      document.getElementById('onboarding-overlay').style.display = 'flex';
+    }
+
+    function afficherEtapeGuide() {
+      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
+
+      const config = etapesGuide[etapeActuelle];
+      document.getElementById('onboarding-badge').innerText = config.badge;
+      document.getElementById('onboarding-title').innerText = config.title;
+      document.getElementById('onboarding-text').innerText = config.text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+      const btnNext = document.getElementById('btn-next-step');
+      if (etapeActuelle === etapesGuide.length - 1) {
+        btnNext.innerText = "C'est compris !";
+      } else {
+        btnNext.innerText = "Suivant";
+      }
+
+      const elTarget = document.querySelector('.' + config.targetClass);
+      if (elTarget) {
+        elTarget.classList.add('highlight-guide');
+        elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function etapeSuivante() {
+      if (etapeActuelle < etapesGuide.length - 1) {
+        etapeActuelle++;
+        afficherEtapeGuide();
+      } else {
+        fermerAide();
+      }
+    }
+
+    function fermerAide() {
+      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
+      document.getElementById('onboarding-overlay').style.display = 'none';
+      localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
   </script>
 

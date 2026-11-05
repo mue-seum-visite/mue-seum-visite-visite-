@@ -124,7 +124,7 @@
       margin-top: 30px;
     }
 
-    /* --- STYLES DU GUIDE FLUIDE ET FIXE EN HAUT --- */
+    /* --- STYLES DU GUIDE FLUIDE MIS À JOUR --- */
     .btn-help-icon {
       position: absolute;
       right: 0;
@@ -142,17 +142,23 @@
     
     .onboarding-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(14px) saturate(0.6);
+      -webkit-backdrop-filter: blur(14px) saturate(0.6);
       z-index: 9999;
       display: none;
-      pointer-events: none;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .onboarding-overlay.active {
+      display: block;
+      opacity: 1;
     }
 
-    /* Bulle d'Aide Haut de Page - Style BD moderne et épuré */
     .top-guide-bubble {
       position: fixed;
       top: 15px;
@@ -225,14 +231,34 @@
       cursor: pointer;
     }
 
-    /* Cadre Rouge Vif Dynamique sur l'élément ciblée */
+    /* Cadre doré pulsant d'exception */
     .highlight-guide {
       position: relative !important;
       z-index: 10000 !important;
-      outline: 3px solid #ff2a2a !important;
-      outline-offset: 3px !important;
-      box-shadow: 0 0 15px rgba(255, 42, 42, 0.8) !important;
+      outline: none !important;
+      border: 2px solid #d4af37 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 0 0 6px rgba(212,175,55,0.16), 0 0 38px rgba(212,175,55,0.65), 0 15px 50px rgba(0,0,0,0.9) !important;
+      animation: highlightPulse 2.2s infinite ease-in-out;
     }
+    @keyframes highlightPulse {
+      0%,100% { box-shadow: 0 0 0 6px rgba(212,175,55,0.14), 0 0 32px rgba(212,175,55,0.55), 0 15px 45px rgba(0,0,0,0.85); }
+      50% { box-shadow: 0 0 0 11px rgba(212,175,55,0.22), 0 0 55px rgba(212,175,55,0.85), 0 15px 45px rgba(0,0,0,0.85); }
+    }
+
+    /* Flèche SVG animée */
+    .guide-arrow {
+      position: fixed;
+      z-index: 10002;
+      width: 72px;
+      height: 80px;
+      display: none;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 12px rgba(212,175,55,0.9));
+      animation: arrowFloat 1.6s infinite ease-in-out;
+    }
+    .guide-arrow.active { display: block; }
+    @keyframes arrowFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
   </style>
 </head>
 <body>
@@ -267,6 +293,14 @@
         <button id="btn-next-step" class="btn-next" onclick="etapeSuivante()">Suivant</button>
       </div>
     </div>
+  </div>
+
+  <!-- FLÈCHE SVG ANIMÉE -->
+  <div id="guide-arrow" class="guide-arrow">
+    <svg viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 4 C 38 22, 62 48, 40 84" stroke="#d4af37" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+      <path d="M24 67 L40 87 L57 69" stroke="#d4af37" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
   </div>
 
   <script>
@@ -339,13 +373,13 @@
       {
         badge: "Étape 2 / 3 — Trajet",
         title: "Bouton « Me rendre à la balade » 📍",
-        text: "Pour aller au point de départ, ce bouton entouré en rouge lance votre itinéraire GPS.",
+        text: "Pour aller au point de départ, ce bouton mis en évidence lance votre itinéraire GPS.",
         targetClass: "btn-gps"
       },
       {
         badge: "Étape 3 / 3 — Lancement",
         title: "Bouton « Découvrir ce parcours » 🥾",
-        text: "Sur place ou chez vous, ce bouton entouré en rouge lance la carte interactive !",
+        text: "Sur place ou chez vous, ce bouton mis en évidence lance la carte interactive !",
         targetClass: "btn-discover"
       }
     ];
@@ -354,7 +388,9 @@
       if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
       etapeActuelle = 0;
       afficherEtapeGuide();
-      document.getElementById('onboarding-overlay').style.display = 'block';
+      const overlay = document.getElementById('onboarding-overlay');
+      overlay.style.display = 'block';
+      requestAnimationFrame(() => overlay.classList.add('active'));
     }
 
     function afficherEtapeGuide() {
@@ -372,10 +408,21 @@
       if (elTarget) {
         elTarget.classList.add('highlight-guide');
         
-        // Défilement doux qui place l'élément bien dégagé au centre, sous la bulle fixe
         setTimeout(() => {
           elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
+
+        // Positionnement dynamique de la flèche pointant vers l'élément
+        setTimeout(() => {
+          const arrow = document.getElementById('guide-arrow');
+          const bubble = document.getElementById('top-guide-bubble');
+          const rect = elTarget.getBoundingClientRect();
+          const bRect = bubble.getBoundingClientRect();
+          arrow.style.left = (rect.left + rect.width/2 - 18) + 'px';
+          arrow.style.top = (bRect.bottom + 6) + 'px';
+          arrow.style.height = Math.max(30, rect.top - bRect.bottom - 15) + 'px';
+          arrow.classList.add('active');
+        }, 200);
       }
     }
 
@@ -389,8 +436,10 @@
     }
 
     function fermerAide() {
+      document.getElementById('guide-arrow').classList.remove('active');
+      document.getElementById('onboarding-overlay').classList.remove('active');
+      setTimeout(() => { document.getElementById('onboarding-overlay').style.display = 'none'; }, 350);
       document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
-      document.getElementById('onboarding-overlay').style.display = 'none';
       localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
   </script>

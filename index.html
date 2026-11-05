@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -124,7 +124,7 @@
       margin-top: 30px;
     }
 
-    /* --- STYLES CAPSULE INTRO / CARROUSEL D'ONBOARDING --- */
+    /* --- STYLES SYSTEME DE GUIDAGE --- */
     .btn-help-icon {
       position: absolute;
       right: 0;
@@ -140,27 +140,25 @@
       z-index: 10;
     }
 
-    .intro-overlay {
+    .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 99999;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
       box-sizing: border-box;
-      opacity: 0;
-      transition: opacity 0.3s ease;
     }
-    .intro-overlay.active {
+    .onboarding-overlay.active {
       display: flex;
-      opacity: 1;
     }
 
-    .intro-card {
+    /* Étape 1 : Modale de bienvenue centrée */
+    .modal-card {
       background: #1e1e1e;
       border: 2px solid #d4af37;
       border-radius: 20px;
@@ -169,16 +167,12 @@
       max-width: 380px;
       box-shadow: 0 15px 40px rgba(0,0,0,0.9);
       text-align: center;
-      position: relative;
     }
-
-    .intro-icon {
+    .modal-icon {
       font-size: 2.8rem;
       margin-bottom: 12px;
-      display: inline-block;
     }
-
-    .intro-badge {
+    .modal-badge {
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 1.5px;
@@ -186,49 +180,42 @@
       font-weight: bold;
       margin-bottom: 8px;
     }
-
-    .intro-title {
+    .modal-title {
       font-size: 1.25rem;
       font-weight: 800;
       margin-bottom: 10px;
       color: #ffffff;
     }
-
-    .intro-text {
+    .modal-text {
       font-size: 0.9rem;
       color: #cccccc;
       line-height: 1.45;
-      margin-bottom: 20px;
-      min-height: 65px;
+      margin-bottom: 24px;
     }
 
-    /* Indicateurs de progression (petits points) */
-    .intro-dots {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #444;
-      transition: all 0.3s ease;
-    }
-    .dot.active {
-      background: #d4af37;
-      width: 20px;
-      border-radius: 10px;
+    /* Étapes 2 & 3 : Infobulle fixe en haut de page */
+    .top-bubble {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 40px);
+      max-width: 380px;
+      background: #1e1e1e;
+      border: 2px solid #d4af37;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      z-index: 10001;
+      box-sizing: border-box;
     }
 
-    .intro-actions {
+    .guide-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
-    .btn-intro-skip {
+    .btn-guide-skip {
       background: transparent;
       border: none;
       color: #888;
@@ -236,16 +223,25 @@
       cursor: pointer;
       text-decoration: underline;
     }
-
-    .btn-intro-next {
+    .btn-guide-next {
       background: #d4af37;
       color: #000;
       border: none;
-      padding: 10px 22px;
+      padding: 9px 20px;
       border-radius: 20px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       cursor: pointer;
+    }
+
+    /* Surbrillance rouge dynamique */
+    .highlight-guide {
+      position: relative !important;
+      z-index: 10000 !important;
+      outline: 3px solid #ff2a2a !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 18px rgba(255, 42, 42, 0.8) !important;
+      border-radius: 12px;
     }
   </style>
 </head>
@@ -268,25 +264,34 @@
 
   <div id="container-parcours"></div>
 
-  <!-- OVERLAY CARROUSEL D'INTRODUCTION AUTOMATIQUE -->
-  <div id="intro-overlay" class="intro-overlay">
-    <div class="intro-card">
-      <div id="intro-icon" class="intro-icon">🗺️</div>
-      <div id="intro-badge" class="intro-badge">Étape 1 / 3</div>
-      <div id="intro-title" class="intro-title">Bienvenue sur MUE.SÉUM</div>
-      <div id="intro-text" class="intro-text">Texte explicatif...</div>
-
-      <div class="intro-dots">
-        <span class="dot active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+  <!-- OVERLAY DU GUIDE PAS À PAS -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    
+    <!-- ÉTAPE 1 : CAPSULE DE BIENVENUE -->
+    <div id="step-modal" class="modal-card">
+      <div class="modal-icon">🗺️</div>
+      <div class="modal-badge">Étape 1 / 3 — Bienvenue</div>
+      <div class="modal-title">Explorez à votre rythme</div>
+      <div class="modal-text">
+        MUE.SÉUM s'utilise <b>sur le terrain OU directement depuis chez vous</b> ! Parcourez la liste pour choisir la balade historique de votre choix.
       </div>
-
-      <div class="intro-actions">
-        <button class="btn-intro-skip" onclick="fermerAide()">Accéder au site</button>
-        <button id="btn-intro-next" class="btn-intro-next" onclick="etapeSuivante()">Suivant</button>
+      <div class="guide-actions">
+        <button class="btn-guide-skip" onclick="fermerAide()">Ignorer</button>
+        <button class="btn-guide-next" onclick="etapeSuivante()">Suivant</button>
       </div>
     </div>
+
+    <!-- ÉTAPES 2 & 3 : BULLE SUPÉRIEURE AVEC SURBRILLANCE ROUGE -->
+    <div id="step-bubble" class="top-bubble" style="display: none;">
+      <div id="bubble-badge" class="modal-badge">Étape 2 / 3</div>
+      <div id="bubble-title" class="modal-title">Titre</div>
+      <div id="bubble-text" class="modal-text">Texte explicatif...</div>
+      <div class="guide-actions">
+        <button class="btn-guide-skip" onclick="fermerAide()">Ignorer</button>
+        <button id="btn-bubble-next" class="btn-guide-next" onclick="etapeSuivante()">Suivant</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -351,83 +356,77 @@
       }
     }
 
-    // --- CAPSULE D'INTRODUCTION AUTOMATIQUE EN 3 ÉTAPES ---
+    // --- GESTION DU GUIDE GUIDÉ PAS À PAS ---
     let etapeActuelle = 0;
-    let timerAutoNext = null;
 
-    const etapesIntro = [
+    const configEtapes = [
       {
-        icon: "🗺️",
-        badge: "Étape 1 / 3 — Bienvenue",
-        title: "Explorez à votre rythme",
-        text: "MUE.SÉUM s'utilise <b>sur le terrain OU directement depuis chez vous</b> ! Choisissez simplement la balade de votre choix."
+        type: "modal" // Étape 1 : Modale centrée fixe
       },
       {
-        icon: "📍",
+        type: "highlight", // Étape 2 : Surbrillance bouton GPS
         badge: "Étape 2 / 3 — Sur le terrain",
-        title: "Bouton « Me rendre à la balade »",
-        text: "Vous souhaitez vous rendre sur place ? Ce bouton ouvre votre GPS (Waze, Google Maps...) pour vous guider jusqu'au point de départ exact."
+        title: "Bouton « Me rendre à la balade » 📍",
+        text: "Vous souhaitez vous rendre sur place ? Ce bouton (entouré en rouge) ouvre votre GPS (Waze, Google Maps...) jusqu'au départ.",
+        targetClass: "btn-gps"
       },
       {
-        icon: "🥾",
+        type: "highlight", // Étape 3 : Surbrillance bouton Découvrir
         badge: "Étape 3 / 3 — Immersion",
-        title: "Bouton « Découvrir ce parcours »",
-        text: "Que vous soyez <b>sur le terrain ou confortablement installé chez vous</b>, cliquez dessus pour ouvrir la carte interactive !"
+        title: "Bouton « Découvrir ce parcours » 🥾",
+        text: "Que vous soyez <b>sur place ou chez vous</b>, ce bouton (entouré en rouge) ouvre la carte interactive pour commencer l'aventure !",
+        targetClass: "btn-discover"
       }
     ];
 
     function demarrerAide(force) {
       if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
       etapeActuelle = 0;
-      afficherEtapeIntro();
-      
-      const overlay = document.getElementById('intro-overlay');
-      overlay.classList.add('active');
-      
-      // Réinitialiser et lancer le défilement automatique toutes les 4.5 secondes
-      lancerAutoDefilement();
+      afficherEtape();
+      document.getElementById('onboarding-overlay').classList.add('active');
     }
 
-    function afficherEtapeIntro() {
-      const config = etapesIntro[etapeActuelle];
-      document.getElementById('intro-icon').innerText = config.icon;
-      document.getElementById('intro-badge').innerText = config.badge;
-      document.getElementById('intro-title').innerText = config.title;
-      document.getElementById('intro-text').innerHTML = config.text;
+    function afficherEtape() {
+      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
 
-      // Mise à jour des points de progression
-      const dots = document.querySelectorAll('.dot');
-      dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === etapeActuelle);
-      });
+      const config = configEtapes[etapeActuelle];
 
-      const btnNext = document.getElementById('btn-intro-next');
-      btnNext.innerText = (etapeActuelle === etapesIntro.length - 1) ? "C'est parti !" : "Suivant";
+      if (config.type === "modal") {
+        document.getElementById('step-modal').style.display = 'block';
+        document.getElementById('step-bubble').style.display = 'none';
+      } else {
+        document.getElementById('step-modal').style.display = 'none';
+        document.getElementById('step-bubble').style.display = 'block';
+
+        document.getElementById('bubble-badge').innerText = config.badge;
+        document.getElementById('bubble-title').innerText = config.title;
+        document.getElementById('bubble-text').innerHTML = config.text;
+
+        const btnNext = document.getElementById('btn-bubble-next');
+        btnNext.innerText = (etapeActuelle === configEtapes.length - 1) ? "C'est compris !" : "Suivant";
+
+        const elTarget = document.querySelector('.' + config.targetClass);
+        if (elTarget) {
+          elTarget.classList.add('highlight-guide');
+          setTimeout(() => {
+            elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      }
     }
 
     function etapeSuivante() {
-      if (etapeActuelle < etapesIntro.length - 1) {
+      if (etapeActuelle < configEtapes.length - 1) {
         etapeActuelle++;
-        afficherEtapeIntro();
-        lancerAutoDefilement(); // Relance le timer lors d'un clic manuel
+        afficherEtape();
       } else {
         fermerAide();
       }
     }
 
-    function lancerAutoDefilement() {
-      clearTimeout(timerAutoNext);
-      timerAutoNext = setTimeout(() => {
-        if (etapeActuelle < etapesIntro.length - 1) {
-          etapeSuivante();
-        }
-      }, 4500); // 4.5 secondes par diapo
-    }
-
     function fermerAide() {
-      clearTimeout(timerAutoNext);
-      const overlay = document.getElementById('intro-overlay');
-      overlay.classList.remove('active');
+      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
+      document.getElementById('onboarding-overlay').classList.remove('active');
       localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
   </script>

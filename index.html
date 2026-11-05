@@ -124,7 +124,7 @@
       margin-top: 30px;
     }
 
-    /* --- STYLES DU GUIDE FLUIDE MIS À JOUR --- */
+    /* --- STYLES CAPSULE INTRO / CARROUSEL D'ONBOARDING --- */
     .btn-help-icon {
       position: absolute;
       right: 0;
@@ -137,128 +137,116 @@
       height: 32px;
       font-weight: bold;
       cursor: pointer;
-      z-index: 10002;
+      z-index: 10;
     }
-    
-    .onboarding-overlay {
+
+    .intro-overlay {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.72);
-      backdrop-filter: blur(14px) saturate(0.6);
-      -webkit-backdrop-filter: blur(14px) saturate(0.6);
-      z-index: 9999;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 99999;
       display: none;
-      pointer-events: auto;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
       opacity: 0;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.3s ease;
     }
-    .onboarding-overlay.active {
-      display: block;
+    .intro-overlay.active {
+      display: flex;
       opacity: 1;
     }
 
-    .top-guide-bubble {
-      position: fixed;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 30px);
-      max-width: 360px;
-      background: #1c1c1e;
+    .intro-card {
+      background: #1e1e1e;
       border: 2px solid #d4af37;
-      border-radius: 16px;
-      padding: 12px 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.9);
-      z-index: 10001;
-      pointer-events: auto;
-      box-sizing: border-box;
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+      text-align: center;
+      position: relative;
     }
 
-    @keyframes popIn {
-      from { opacity: 0; transform: translate(-50%, -15px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
+    .intro-icon {
+      font-size: 2.8rem;
+      margin-bottom: 12px;
+      display: inline-block;
     }
 
-    .bubble-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .bubble-badge {
-      font-size: 0.68rem;
+    .intro-badge {
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: #d4af37;
       font-weight: bold;
+      margin-bottom: 8px;
     }
-    .bubble-title {
-      font-size: 0.95rem;
-      font-weight: bold;
-      margin-bottom: 4px;
+
+    .intro-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 10px;
       color: #ffffff;
     }
-    .bubble-text {
-      font-size: 0.82rem;
-      color: #dddddd;
-      line-height: 1.35;
-      margin-bottom: 10px;
+
+    .intro-text {
+      font-size: 0.9rem;
+      color: #cccccc;
+      line-height: 1.45;
+      margin-bottom: 20px;
+      min-height: 65px;
     }
-    .bubble-actions {
+
+    /* Indicateurs de progression (petits points) */
+    .intro-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #444;
+      transition: all 0.3s ease;
+    }
+    .dot.active {
+      background: #d4af37;
+      width: 20px;
+      border-radius: 10px;
+    }
+
+    .intro-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .btn-skip {
+
+    .btn-intro-skip {
       background: transparent;
       border: none;
-      color: #888888;
-      font-size: 0.78rem;
+      color: #888;
+      font-size: 0.85rem;
       cursor: pointer;
       text-decoration: underline;
     }
-    .btn-next {
+
+    .btn-intro-next {
       background: #d4af37;
       color: #000;
       border: none;
-      padding: 6px 14px;
-      border-radius: 14px;
+      padding: 10px 22px;
+      border-radius: 20px;
       font-weight: bold;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       cursor: pointer;
     }
-
-    /* Cadre doré pulsant d'exception */
-    .highlight-guide {
-      position: relative !important;
-      z-index: 10000 !important;
-      outline: none !important;
-      border: 2px solid #d4af37 !important;
-      border-radius: 16px !important;
-      box-shadow: 0 0 0 6px rgba(212,175,55,0.16), 0 0 38px rgba(212,175,55,0.65), 0 15px 50px rgba(0,0,0,0.9) !important;
-      animation: highlightPulse 2.2s infinite ease-in-out;
-    }
-    @keyframes highlightPulse {
-      0%,100% { box-shadow: 0 0 0 6px rgba(212,175,55,0.14), 0 0 32px rgba(212,175,55,0.55), 0 15px 45px rgba(0,0,0,0.85); }
-      50% { box-shadow: 0 0 0 11px rgba(212,175,55,0.22), 0 0 55px rgba(212,175,55,0.85), 0 15px 45px rgba(0,0,0,0.85); }
-    }
-
-    /* Flèche SVG animée */
-    .guide-arrow {
-      position: fixed;
-      z-index: 10002;
-      width: 72px;
-      height: 80px;
-      display: none;
-      pointer-events: none;
-      filter: drop-shadow(0 2px 12px rgba(212,175,55,0.9));
-      animation: arrowFloat 1.6s infinite ease-in-out;
-    }
-    .guide-arrow.active { display: block; }
-    @keyframes arrowFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
   </style>
 </head>
 <body>
@@ -280,34 +268,34 @@
 
   <div id="container-parcours"></div>
 
-  <!-- OVERLAY & BULLE FIXE EN HAUT -->
-  <div id="onboarding-overlay" class="onboarding-overlay">
-    <div id="top-guide-bubble" class="top-guide-bubble">
-      <div class="bubble-header">
-        <span id="bubble-badge" class="bubble-badge">Étape 1 / 3</span>
+  <!-- OVERLAY CARROUSEL D'INTRODUCTION AUTOMATIQUE -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div class="intro-card">
+      <div id="intro-icon" class="intro-icon">🗺️</div>
+      <div id="intro-badge" class="intro-badge">Étape 1 / 3</div>
+      <div id="intro-title" class="intro-title">Bienvenue sur MUE.SÉUM</div>
+      <div id="intro-text" class="intro-text">Texte explicatif...</div>
+
+      <div class="intro-dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
       </div>
-      <div id="bubble-title" class="bubble-title">Titre</div>
-      <div id="bubble-text" class="bubble-text">Texte explicatif...</div>
-      <div class="bubble-actions">
-        <button class="btn-skip" onclick="fermerAide()">Passer</button>
-        <button id="btn-next-step" class="btn-next" onclick="etapeSuivante()">Suivant</button>
+
+      <div class="intro-actions">
+        <button class="btn-intro-skip" onclick="fermerAide()">Accéder au site</button>
+        <button id="btn-intro-next" class="btn-intro-next" onclick="etapeSuivante()">Suivant</button>
       </div>
     </div>
-  </div>
-
-  <!-- FLÈCHE SVG ANIMÉE -->
-  <div id="guide-arrow" class="guide-arrow">
-    <svg viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 4 C 38 22, 62 48, 40 84" stroke="#d4af37" stroke-width="3.6" stroke-linecap="round" fill="none"/>
-      <path d="M24 67 L40 87 L57 69" stroke="#d4af37" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </svg>
   </div>
 
   <script>
     let parcoursData = [];
 
+    // Génération automatique des noms de fichiers de parcours-1.json à parcours-60.json
     const listeFichiers = Array.from({ length: 60 }, (_, i) => `parcours-${i + 1}.json`);
 
+    // Chargement dynamique de chaque fichier individuel s'il existe
     Promise.all(
       listeFichiers.map(fichier => 
         fetch(fichier)
@@ -315,9 +303,11 @@
           .catch(() => null)
       )
     ).then(resultats => {
+      // Filtrer pour garder uniquement les parcours réellement créés
       parcoursData = resultats.filter(item => item !== null);
       afficherParcours(parcoursData);
 
+      // Lancement automatique du guide à la première visite
       if (!localStorage.getItem('mueseum_accueil_guided_seen')) {
         demarrerAide(false);
       }
@@ -361,85 +351,83 @@
       }
     }
 
-    // --- GESTION DU GUIDE GUIDÉ PAS À PAS ---
+    // --- CAPSULE D'INTRODUCTION AUTOMATIQUE EN 3 ÉTAPES ---
     let etapeActuelle = 0;
-    const etapesGuide = [
+    let timerAutoNext = null;
+
+    const etapesIntro = [
       {
+        icon: "🗺️",
         badge: "Étape 1 / 3 — Bienvenue",
-        title: "Explorez votre choix 🗺️",
-        text: "MUE.SÉUM fonctionne <b>sur le terrain OU au chaud chez vous</b> ! Choisissez la carte de votre balade.",
-        targetClass: "route-card"
+        title: "Explorez à votre rythme",
+        text: "MUE.SÉUM s'utilise <b>sur le terrain OU directement depuis chez vous</b> ! Choisissez simplement la balade de votre choix."
       },
       {
-        badge: "Étape 2 / 3 — Trajet",
-        title: "Bouton « Me rendre à la balade » 📍",
-        text: "Pour aller au point de départ, ce bouton mis en évidence lance votre itinéraire GPS.",
-        targetClass: "btn-gps"
+        icon: "📍",
+        badge: "Étape 2 / 3 — Sur le terrain",
+        title: "Bouton « Me rendre à la balade »",
+        text: "Vous souhaitez vous rendre sur place ? Ce bouton ouvre votre GPS (Waze, Google Maps...) pour vous guider jusqu'au point de départ exact."
       },
       {
-        badge: "Étape 3 / 3 — Lancement",
-        title: "Bouton « Découvrir ce parcours » 🥾",
-        text: "Sur place ou chez vous, ce bouton mis en évidence lance la carte interactive !",
-        targetClass: "btn-discover"
+        icon: "🥾",
+        badge: "Étape 3 / 3 — Immersion",
+        title: "Bouton « Découvrir ce parcours »",
+        text: "Que vous soyez <b>sur le terrain ou confortablement installé chez vous</b>, cliquez dessus pour ouvrir la carte interactive !"
       }
     ];
 
     function demarrerAide(force) {
       if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
       etapeActuelle = 0;
-      afficherEtapeGuide();
-      const overlay = document.getElementById('onboarding-overlay');
-      overlay.style.display = 'block';
-      requestAnimationFrame(() => overlay.classList.add('active'));
+      afficherEtapeIntro();
+      
+      const overlay = document.getElementById('intro-overlay');
+      overlay.classList.add('active');
+      
+      // Réinitialiser et lancer le défilement automatique toutes les 4.5 secondes
+      lancerAutoDefilement();
     }
 
-    function afficherEtapeGuide() {
-      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
+    function afficherEtapeIntro() {
+      const config = etapesIntro[etapeActuelle];
+      document.getElementById('intro-icon').innerText = config.icon;
+      document.getElementById('intro-badge').innerText = config.badge;
+      document.getElementById('intro-title').innerText = config.title;
+      document.getElementById('intro-text').innerHTML = config.text;
 
-      const config = etapesGuide[etapeActuelle];
-      document.getElementById('bubble-badge').innerText = config.badge;
-      document.getElementById('bubble-title').innerText = config.title;
-      document.getElementById('bubble-text').innerHTML = config.text;
+      // Mise à jour des points de progression
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === etapeActuelle);
+      });
 
-      const btnNext = document.getElementById('btn-next-step');
-      btnNext.innerText = (etapeActuelle === etapesGuide.length - 1) ? "OK !" : "Suivant";
-
-      const elTarget = document.querySelector('.' + config.targetClass);
-      if (elTarget) {
-        elTarget.classList.add('highlight-guide');
-        
-        setTimeout(() => {
-          elTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-
-        // Positionnement dynamique de la flèche pointant vers l'élément
-        setTimeout(() => {
-          const arrow = document.getElementById('guide-arrow');
-          const bubble = document.getElementById('top-guide-bubble');
-          const rect = elTarget.getBoundingClientRect();
-          const bRect = bubble.getBoundingClientRect();
-          arrow.style.left = (rect.left + rect.width/2 - 18) + 'px';
-          arrow.style.top = (bRect.bottom + 6) + 'px';
-          arrow.style.height = Math.max(30, rect.top - bRect.bottom - 15) + 'px';
-          arrow.classList.add('active');
-        }, 200);
-      }
+      const btnNext = document.getElementById('btn-intro-next');
+      btnNext.innerText = (etapeActuelle === etapesIntro.length - 1) ? "C'est parti !" : "Suivant";
     }
 
     function etapeSuivante() {
-      if (etapeActuelle < etapesGuide.length - 1) {
+      if (etapeActuelle < etapesIntro.length - 1) {
         etapeActuelle++;
-        afficherEtapeGuide();
+        afficherEtapeIntro();
+        lancerAutoDefilement(); // Relance le timer lors d'un clic manuel
       } else {
         fermerAide();
       }
     }
 
+    function lancerAutoDefilement() {
+      clearTimeout(timerAutoNext);
+      timerAutoNext = setTimeout(() => {
+        if (etapeActuelle < etapesIntro.length - 1) {
+          etapeSuivante();
+        }
+      }, 4500); // 4.5 secondes par diapo
+    }
+
     function fermerAide() {
-      document.getElementById('guide-arrow').classList.remove('active');
-      document.getElementById('onboarding-overlay').classList.remove('active');
-      setTimeout(() => { document.getElementById('onboarding-overlay').style.display = 'none'; }, 350);
-      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
+      clearTimeout(timerAutoNext);
+      const overlay = document.getElementById('intro-overlay');
+      overlay.classList.remove('active');
       localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
   </script>

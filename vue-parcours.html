@@ -145,13 +145,11 @@
       100% { opacity: 1; }
     }
 
-    /* --- GUIDAGE AVEC BOUTON PARFAITEMENT DEGAGÉ DU FLOU --- */
+    /* --- OVERLAY SANS FLOU SUPPRESSIF --- */
     .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+      background: rgba(0, 0, 0, 0.5); /* Pas de backdrop-filter blur pour ne rien flouter */
       z-index: 99999;
       display: none;
     }
@@ -207,17 +205,22 @@
       float: right;
     }
 
-    /* Encadré Rouge Vif Nette + Mise au premier plan pour passer AU DESSUS du flou */
+    /* Bouton GPS ultra-net qui passe AU-DESSUS du voile sombre */
     .highlight-guide {
       position: relative !important;
-      z-index: 1000000 !important; /* Passe au-dessus du voile de flou */
+      z-index: 1000000 !important;
       background: #ffffff !important;
       color: #000000 !important;
       outline: 4px solid #ff2a2a !important;
       outline-offset: 3px !important;
-      box-shadow: 0 0 25px rgba(255, 42, 42, 1), 0 0 10px rgba(255, 255, 255, 0.9) !important;
+      box-shadow: 0 0 25px rgba(255, 42, 42, 1), 0 0 10px rgba(255, 255, 255, 1) !important;
       border-radius: 4px;
       opacity: 1 !important;
+    }
+
+    /* Force le conteneur haut-droit de Leaflet à passer devant l'overlay */
+    .leaflet-top.leaflet-right {
+      z-index: 1000000 !important;
     }
   </style>
 </head>
@@ -455,7 +458,7 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Déclenchement du guidage net
+      // Déclenchement automatique du guidage GPS
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
@@ -465,10 +468,6 @@
       const overlay = document.getElementById('onboarding-overlay');
 
       if (btnGps) {
-        // Faire monter le conteneur du bouton Leaflet en z-index
-        if (btnGps.parentElement) {
-          btnGps.parentElement.style.zIndex = "1000000";
-        }
         btnGps.classList.add('highlight-guide');
         overlay.classList.add('active');
       }
@@ -477,12 +476,7 @@
     function fermerGuidageGPS() {
       const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
-      if (btnGps) {
-        btnGps.classList.remove('highlight-guide');
-        if (btnGps.parentElement) {
-          btnGps.parentElement.style.zIndex = "";
-        }
-      }
+      if (btnGps) btnGps.classList.remove('highlight-guide');
       if (overlay) overlay.classList.remove('active');
     }
 

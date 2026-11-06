@@ -145,30 +145,76 @@
       100% { opacity: 1; }
     }
 
-    /* --- STYLES SYSTEME DE GUIDAGE TACTIQUE (PAGE PARCOURS) --- */
+    /* --- GUIDAGE SOUPLE ET NET (FLOU MINIME 2PX) --- */
     .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px); /* Flou ultra léger pour garder la carte bien nette */
+      -webkit-backdrop-filter: blur(2px);
       z-index: 999999;
       display: none;
-      pointer-events: none;
     }
     .onboarding-overlay.active {
       display: block;
     }
 
-    /* Surbrillance rouge dynamique directe sur l'élément ciblée */
+    /* Bulle d'explication GPS sous le bouton */
+    .gps-info-bubble {
+      position: fixed;
+      top: 70px;
+      right: 15px;
+      width: calc(100% - 30px);
+      max-width: 320px;
+      background: #1c1c1e;
+      border: 2px solid #d4af37;
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+      z-index: 1000005;
+      box-sizing: border-box;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .gps-bubble-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #d4af37;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .gps-bubble-text {
+      font-size: 0.82rem;
+      color: #e0e0e0;
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+    .btn-gps-ok {
+      background: #d4af37;
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* Encadré Rouge Vif Dynamique sur le bouton GPS */
     .highlight-guide {
       position: relative !important;
       z-index: 1000000 !important;
-      outline: 4px solid #ff2a2a !important;
-      outline-offset: 4px !important;
-      box-shadow: 0 0 25px rgba(255, 42, 42, 0.9) !important;
-      border-radius: 8px;
-      pointer-events: auto !important;
+      outline: 3px solid #ff2a2a !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 20px rgba(255, 42, 42, 0.9) !important;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -189,8 +235,16 @@
     </div>
   </div>
 
-  <!-- COMPOSANT OVERLAY DE GUIDAGE -->
-  <div id="onboarding-overlay" class="onboarding-overlay"></div>
+  <!-- COMPOSANT OVERLAY DE GUIDAGE GPS -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    <div class="gps-info-bubble">
+      <div class="gps-bubble-title">📍 Guidage sur le terrain</div>
+      <div class="gps-bubble-text">
+        Si vous vous rendez sur place, <b>lancez le GPS</b> pour vous guider. Vous serez représenté sur la carte par une <b>petite flèche bleue</b>.
+      </div>
+      <button class="btn-gps-ok" onclick="fermerGuidageGPS()">C'est compris</button>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -318,7 +372,7 @@
         const avecSon = pt.avec_son ? true : false;
         
         const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button id="${index === 0 ? 'btn-ar-guide-target' : ''}" class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
+          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
           : '';
 
         const contenuPopup = `
@@ -329,13 +383,7 @@
           </div>
         `;
 
-        const marker = L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
-        
-        if (index === 0) {
-          marker.on('add', function() {
-            if (this._icon) this._icon.id = 'first-map-marker';
-          });
-        }
+        L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
       });
 
       // --- AJOUT : Bouton de contrôle GPS ---
@@ -362,9 +410,7 @@
       // Événement clic sur le bouton GPS
       document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'btn-gps') {
-          // Désactiver le contour rouge du guidage dès que l'utilisateur clique sur le GPS
-          e.target.classList.remove('highlight-guide');
-          document.getElementById('onboarding-overlay').classList.remove('active');
+          fermerGuidageGPS();
 
           if (!isTracking) {
             map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
@@ -396,7 +442,7 @@
             weight: 3,
             opacity: 1,
             fillOpacity: 0.9
-          }).addTo(map).bindPopup("Vous êtes ici (Représenté par la flèche bleue)");
+          }).addTo(map).bindPopup("Vous êtes ici (Flèche bleue)");
         } else {
           userMarker.setLatLng(e.latlng);
         }
@@ -406,11 +452,11 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Lancement direct de la mise en surbrillance du bouton GPS au chargement
+      // Déclenchement automatique et net du guidage GPS
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
-    // --- SYSTEME DE GUIDAGE DIRECT SUR BOUTON GPS ---
+    // --- SYSTEME DE GUIDAGE GPS LIMIDE ET NET ---
     function demarrerGuidageGPS() {
       const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
@@ -419,6 +465,13 @@
         btnGps.classList.add('highlight-guide');
         overlay.classList.add('active');
       }
+    }
+
+    function fermerGuidageGPS() {
+      const btnGps = document.getElementById('btn-gps');
+      const overlay = document.getElementById('onboarding-overlay');
+      if (btnGps) btnGps.classList.remove('highlight-guide');
+      if (overlay) overlay.classList.remove('active');
     }
 
     async function lancerExperience(mediaUrl, avecSon = false) {

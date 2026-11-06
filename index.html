@@ -250,7 +250,7 @@
   <div class="header">
     <h1 class="title">MUE.<span>SÉUM</span></h1>
     <div class="subtitle">Machine à remonter le temps</div>
-    <button class="btn-help-icon" onclick="demarrerAide(true)" title="Revoir le guide">?</button>
+    <button class="btn-help-icon" onclick="demarrerAide()" title="Revoir le guide">?</button>
   </div>
 
   <div class="search-bar">
@@ -312,10 +312,8 @@
       parcoursData = resultats.filter(item => item !== null);
       afficherParcours(parcoursData);
 
-      // Lancement automatique du guide à la première visite
-      if (!localStorage.getItem('mueseum_accueil_guided_seen')) {
-        demarrerAide(false);
-      }
+      // Lancement AUTOMATIQUE à chaque accès ou rechargement de la page
+      demarrerAide();
     });
 
     function afficherParcours(liste) {
@@ -371,7 +369,7 @@
         targetClass: "btn-gps"
       },
       {
-        type: "highlight", // Étape 3 : Surbrillance bouton Découvrir
+        type: "highlight", // Étape 3 : Surbrillance bouton Découvrir",
         badge: "Étape 3 / 3 — Immersion",
         title: "Bouton « Découvrir ce parcours » 🥾",
         text: "Que vous soyez <b>sur place ou chez vous</b>, ce bouton (entouré en rouge) ouvre la carte interactive pour commencer l'aventure !",
@@ -379,8 +377,7 @@
       }
     ];
 
-    function demarrerAide(force) {
-      if (force) localStorage.removeItem('mueseum_accueil_guided_seen');
+    function demarrerAide() {
       etapeActuelle = 0;
       afficherEtape();
       document.getElementById('onboarding-overlay').classList.add('active');
@@ -427,7 +424,6 @@
     function fermerAide() {
       document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
       document.getElementById('onboarding-overlay').classList.remove('active');
-      localStorage.setItem('mueseum_accueil_guided_seen', 'true');
     }
   </script>
 

@@ -76,7 +76,7 @@
       width: 100vw;
       height: 100vh;
       background: #000;
-      z-index: 9999999; /* Passe au-dessus de tout le reste lors de l'animation */
+      z-index: 9999999;
     }
 
     #ar-canvas {
@@ -157,11 +157,9 @@
       display: block;
     }
 
-    /* Bulle d'explication GPS sous le bouton */
-    .gps-info-bubble {
+    /* Bulles d'explication de guidage */
+    .guide-info-bubble {
       position: fixed;
-      top: 75px;
-      right: 15px;
       width: calc(100% - 30px);
       max-width: 320px;
       background: #1c1c1e;
@@ -179,7 +177,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .gps-bubble-title {
+    .guide-bubble-title {
       font-size: 0.85rem;
       font-weight: bold;
       color: #d4af37;
@@ -187,13 +185,13 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .gps-bubble-text {
+    .guide-bubble-text {
       font-size: 0.82rem;
       color: #e0e0e0;
       line-height: 1.35;
       margin-bottom: 10px;
     }
-    .btn-gps-ok {
+    .btn-guide-ok {
       background: #d4af37;
       color: #000;
       border: none;
@@ -205,7 +203,7 @@
       float: right;
     }
 
-    /* Bouton GPS net sur la carte */
+    /* Encadrés rouges clairs de surbrillance */
     .highlight-guide {
       position: relative !important;
       z-index: 1000000 !important;
@@ -218,7 +216,17 @@
       opacity: 1 !important;
     }
 
-    /* Gère le conteneur GPS sur la carte uniquement */
+    /* Animation pulsante sur l'icône de point bleu ciblée */
+    .highlight-marker {
+      z-index: 1000000 !important;
+      filter: drop-shadow(0 0 12px #ff2a2a) drop-shadow(0 0 20px #ff2a2a) !important;
+      animation: markerPulse 1.5s infinite ease-in-out;
+    }
+    @keyframes markerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+    }
+
     .leaflet-top.leaflet-right {
       z-index: 1000000;
     }
@@ -241,15 +249,27 @@
     </div>
   </div>
 
-  <!-- COMPOSANT OVERLAY DE GUIDAGE GPS -->
+  <!-- COMPOSANT OVERLAY DE GUIDAGE -->
   <div id="onboarding-overlay" class="onboarding-overlay">
-    <div class="gps-info-bubble">
-      <div class="gps-bubble-title">📍 Guidage sur le terrain</div>
-      <div class="gps-bubble-text">
+    
+    <!-- BULLE ÉTAPE 1 : GPS -->
+    <div id="bubble-gps" class="guide-info-bubble" style="top: 75px; right: 15px;">
+      <div class="guide-bubble-title">📍 Guidage sur le terrain</div>
+      <div class="guide-bubble-text">
         Si vous vous rendez sur place, <b>lancez le GPS</b> pour vous guider. Vous serez représenté sur la carte par une <b>petite flèche bleue</b>.
       </div>
-      <button class="btn-gps-ok" onclick="fermerGuidageGPS()">C'est compris</button>
+      <button class="btn-guide-ok" onclick="passerAEtapePoints()">C'est compris</button>
     </div>
+
+    <!-- BULLE ÉTAPE 2 : POINTS BLEUS DE L'HISTOIRE -->
+    <div id="bubble-points" class="guide-info-bubble" style="bottom: 80px; left: 50%; transform: translateX(-50%); display: none;">
+      <div class="guide-bubble-title">🔵 Points d'histoire</div>
+      <div class="guide-bubble-text">
+        Cliquez sur les <b>points bleus</b> répartis sur la carte pour explorer les lieux et <b>rentrer dans l'histoire</b>.
+      </div>
+      <button class="btn-guide-ok" onclick="fermerToutLeGuidage()">C'est compris</button>
+    </div>
+
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -389,7 +409,18 @@
           </div>
         `;
 
-        L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
+        const marker = L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
+
+        // Attribuer un identifiant au premier marqueur bleu pour la surbrillance
+        if (index === 0) {
+          marker.on('add', function() {
+            if (this._icon) this._icon.id = 'first-blue-marker';
+          });
+          // Si l'utilisateur clique directement sur un marqueur, on ferme le guidage
+          marker.on('click', function() {
+            fermerToutLeGuidage();
+          });
+        }
       });
 
       // --- AJOUT : Bouton de contrôle GPS ---
@@ -416,7 +447,7 @@
       // Événement clic sur le bouton GPS
       document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'btn-gps') {
-          fermerGuidageGPS();
+          passerAEtapePoints();
 
           if (!isTracking) {
             map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
@@ -458,11 +489,11 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Déclenchement automatique du guidage GPS
+      // Lancement automatique Étape 1 (GPS)
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
-    // --- SYSTEME DE GUIDAGE GPS ---
+    // --- SYSTEME DE GUIDAGE ÉTAPE PAR ÉTAPE ---
     function demarrerGuidageGPS() {
       const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
@@ -473,16 +504,36 @@
       }
     }
 
-    function fermerGuidageGPS() {
+    function passerAEtapePoints() {
+      // Retirer surbrillance GPS et sa bulle
       const btnGps = document.getElementById('btn-gps');
-      const overlay = document.getElementById('onboarding-overlay');
       if (btnGps) btnGps.classList.remove('highlight-guide');
+      document.getElementById('bubble-gps').style.display = 'none';
+
+      // Activer la bulle et la surbrillance sur le point bleu d'intérêt
+      const bubblePoints = document.getElementById('bubble-points');
+      if (bubblePoints) bubblePoints.style.display = 'block';
+
+      const firstMarkerIcon = document.getElementById('first-blue-marker');
+      if (firstMarkerIcon) {
+        firstMarkerIcon.classList.add('highlight-marker');
+      }
+    }
+
+    function fermerToutLeGuidage() {
+      const btnGps = document.getElementById('btn-gps');
+      if (btnGps) btnGps.classList.remove('highlight-guide');
+
+      const firstMarkerIcon = document.getElementById('first-blue-marker');
+      if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
+
+      const overlay = document.getElementById('onboarding-overlay');
       if (overlay) overlay.classList.remove('active');
     }
 
     async function lancerExperience(mediaUrl, avecSon = false) {
-      // Masquer obligatoirement le guidage GPS et son bouton pendant l'animation
-      fermerGuidageGPS();
+      // Masquer obligatoirement le guidage et les boutons pendant l'animation
+      fermerToutLeGuidage();
       const gpsBtnContainer = document.querySelector('.leaflet-top.leaflet-right');
       if (gpsBtnContainer) gpsBtnContainer.style.display = 'none';
 

@@ -76,7 +76,7 @@
       width: 100vw;
       height: 100vh;
       background: #000;
-      z-index: 99999;
+      z-index: 9999999; /* Passe au-dessus de tout le reste lors de l'animation */
     }
 
     #ar-canvas {
@@ -145,11 +145,11 @@
       100% { opacity: 1; }
     }
 
-    /* --- OVERLAY SANS FLOU SUPPRESSIF --- */
+    /* --- OVERLAY DU GUIDAGE INITIAL --- */
     .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5); /* Pas de backdrop-filter blur pour ne rien flouter */
+      background: rgba(0, 0, 0, 0.5);
       z-index: 99999;
       display: none;
     }
@@ -205,7 +205,7 @@
       float: right;
     }
 
-    /* Bouton GPS ultra-net qui passe AU-DESSUS du voile sombre */
+    /* Bouton GPS net sur la carte */
     .highlight-guide {
       position: relative !important;
       z-index: 1000000 !important;
@@ -218,9 +218,9 @@
       opacity: 1 !important;
     }
 
-    /* Force le conteneur haut-droit de Leaflet à passer devant l'overlay */
+    /* Gère le conteneur GPS sur la carte uniquement */
     .leaflet-top.leaflet-right {
-      z-index: 1000000 !important;
+      z-index: 1000000;
     }
   </style>
 </head>
@@ -462,7 +462,7 @@
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
-    // --- SYSTEME DE GUIDAGE GPS LIMIDE ET NET ---
+    // --- SYSTEME DE GUIDAGE GPS ---
     function demarrerGuidageGPS() {
       const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
@@ -481,6 +481,11 @@
     }
 
     async function lancerExperience(mediaUrl, avecSon = false) {
+      // Masquer obligatoirement le guidage GPS et son bouton pendant l'animation
+      fermerGuidageGPS();
+      const gpsBtnContainer = document.querySelector('.leaflet-top.leaflet-right');
+      if (gpsBtnContainer) gpsBtnContainer.style.display = 'none';
+
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
@@ -600,6 +605,10 @@
         cameraStream = null;
       }
       arOverlay.style.display = 'none';
+
+      // Réafficher le bouton GPS sur la carte quand l'animation est fermée
+      const gpsBtnContainer = document.querySelector('.leaflet-top.leaflet-right');
+      if (gpsBtnContainer) gpsBtnContainer.style.display = 'block';
     }
 
     function telechargerPhoto() {

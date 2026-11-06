@@ -149,90 +149,26 @@
     .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index: 999999;
       display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      box-sizing: border-box;
+      pointer-events: none;
     }
     .onboarding-overlay.active {
-      display: flex;
+      display: block;
     }
 
-    .top-bubble {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 40px);
-      max-width: 380px;
-      background: #1e1e1e;
-      border: 2px solid #d4af37;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-      z-index: 1000005;
-      box-sizing: border-box;
-      text-align: center;
-    }
-
-    .modal-badge {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #d4af37;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    .modal-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      margin-bottom: 10px;
-      color: #ffffff;
-    }
-    .modal-text {
-      font-size: 0.88rem;
-      color: #cccccc;
-      line-height: 1.4;
-      margin-bottom: 18px;
-    }
-
-    .guide-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .btn-guide-skip {
-      background: transparent;
-      border: none;
-      color: #888;
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .btn-guide-next {
-      background: #d4af37;
-      color: #000;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    /* Surbrillance rouge des éléments guidés */
+    /* Surbrillance rouge dynamique directe sur l'élément ciblée */
     .highlight-guide {
       position: relative !important;
       z-index: 1000000 !important;
-      outline: 3px solid #ff2a2a !important;
-      outline-offset: 3px !important;
-      box-shadow: 0 0 20px rgba(255, 42, 42, 0.9) !important;
+      outline: 4px solid #ff2a2a !important;
+      outline-offset: 4px !important;
+      box-shadow: 0 0 25px rgba(255, 42, 42, 0.9) !important;
       border-radius: 8px;
+      pointer-events: auto !important;
     }
   </style>
 </head>
@@ -253,18 +189,8 @@
     </div>
   </div>
 
-  <!-- COMPOSANT OVERLAY DE GUIDAGE PAS À PAS -->
-  <div id="onboarding-overlay" class="onboarding-overlay">
-    <div id="top-bubble" class="top-bubble">
-      <div id="bubble-badge" class="modal-badge">Étape 1 / 6</div>
-      <div id="bubble-title" class="modal-title">Titre</div>
-      <div id="bubble-text" class="modal-text">Texte...</div>
-      <div class="guide-actions">
-        <button class="btn-guide-skip" onclick="fermerAide()">Ignorer</button>
-        <button id="btn-guide-next" class="btn-guide-next" onclick="etapeSuivante()">Suivant</button>
-      </div>
-    </div>
-  </div>
+  <!-- COMPOSANT OVERLAY DE GUIDAGE -->
+  <div id="onboarding-overlay" class="onboarding-overlay"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -405,7 +331,6 @@
 
         const marker = L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
         
-        // Taguer le premier marqueur Leaflet pour le ciblage visuel du guide
         if (index === 0) {
           marker.on('add', function() {
             if (this._icon) this._icon.id = 'first-map-marker';
@@ -437,6 +362,10 @@
       // Événement clic sur le bouton GPS
       document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'btn-gps') {
+          // Désactiver le contour rouge du guidage dès que l'utilisateur clique sur le GPS
+          e.target.classList.remove('highlight-guide');
+          document.getElementById('onboarding-overlay').classList.remove('active');
+
           if (!isTracking) {
             map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
             e.target.innerHTML = '🛑 Arrêter le GPS';
@@ -457,7 +386,7 @@
         }
       });
 
-      // Mettre à jour la position de l'utilisateur (Point Bleu avec flèche)
+      // Mettre à jour la position de l'utilisateur (Point Bleu)
       map.on('locationfound', function(e) {
         if (!userMarker) {
           userMarker = L.circleMarker(e.latlng, {
@@ -477,109 +406,27 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Lancement automatique systématique du guidage pas à pas
-      setTimeout(() => demarrerAide(), 500);
+      // Lancement direct de la mise en surbrillance du bouton GPS au chargement
+      setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
-    // --- SYSTEME DE GUIDAGE PAS À PAS (PAGE VUE-PARCOURS) ---
-    let etapeActuelle = 0;
-    const configEtapes = [
-      {
-        badge: "Étape 1 / 6 — Géolocalisation",
-        title: "Activer votre itinéraire 📍",
-        text: "Si vous vous rendez sur place, n'oubliez pas de <b>lancer le GPS</b> pour vous guider. Vous serez représenté sur la carte par une <b>petite flèche bleue</b>.",
-        targetId: "btn-gps"
-      },
-      {
-        badge: "Étape 2 / 6 — Points d'Histoire",
-        title: "Découvrez les étapes 🔵",
-        text: "Cliquez sur les <b>points bleus de la carte</b> pour ouvrir les informations et entrer dans l'histoire du lieu.",
-        targetId: "first-map-marker"
-      },
-      {
-        badge: "Étape 3 / 6 — Réalité Augmentée",
-        title: "Remonter le temps 🚀",
-        text: "Cliquez sur <b>« Entrer dans l'époque »</b> pour que la magie de la réalité augmentée opère !",
-        actionSimulee: "openPopup"
-      },
-      {
-        badge: "Étape 4 / 6 — Souvenir",
-        title: "Immortalisez le moment 📸",
-        text: "N'oubliez pas de <b>prendre une photo souvenir ou de vous filmer</b> pour garder ce moment et l'enregistrer dans votre téléphone !",
-        targetId: "ar-controls-box"
-      },
-      {
-        badge: "Étape 5 / 6 — Fin d'immersion",
-        title: "Quitter l'époque ❌",
-        text: "Une fois que vous avez fini de visualiser la magie, vous pouvez <b>cliquer sur Fermer</b> pour revenir à la carte.",
-        targetId: "btn-close-ar-target"
-      },
-      {
-        badge: "Étape 6 / 6 — Poursuivre l'aventure",
-        title: "Explorer d'autres lieux 🏠",
-        text: "Appuyez sur le bouton <b>Accueil</b> à tout moment pour découvrir d'autres histoires et d'autres parcours !",
-        targetId: "btn-accueil-guide"
+    // --- SYSTEME DE GUIDAGE DIRECT SUR BOUTON GPS ---
+    function demarrerGuidageGPS() {
+      const btnGps = document.getElementById('btn-gps');
+      const overlay = document.getElementById('onboarding-overlay');
+
+      if (btnGps) {
+        btnGps.classList.add('highlight-guide');
+        overlay.classList.add('active');
       }
-    ];
-
-    function demarrerAide() {
-      etapeActuelle = 0;
-      afficherEtape();
-      document.getElementById('onboarding-overlay').classList.add('active');
-    }
-
-    function afficherEtape() {
-      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
-
-      const config = configEtapes[etapeActuelle];
-      document.getElementById('bubble-badge').innerText = config.badge;
-      document.getElementById('bubble-title').innerText = config.title;
-      document.getElementById('bubble-text').innerHTML = config.text;
-
-      const btnNext = document.getElementById('btn-guide-next');
-      btnNext.innerText = (etapeActuelle === configEtapes.length - 1) ? "C'est compris !" : "Suivant";
-
-      // Simulation d'ouverture pour les étapes spécifiques de la RA
-      if (config.actionSimulee === "openPopup") {
-        const markerIcon = document.getElementById('first-map-marker');
-        if (markerIcon) markerIcon.click();
-      }
-
-      if (config.targetId) {
-        let elTarget = document.getElementById(config.targetId);
-        
-        // Cibles spéciales dans l'interface RA
-        if (config.targetId === "ar-controls-box") elTarget = document.querySelector('.ar-controls');
-        if (config.targetId === "btn-close-ar-target") elTarget = document.querySelector('.btn-close-ar');
-
-        if (elTarget) {
-          elTarget.classList.add('highlight-guide');
-        }
-      }
-    }
-
-    function etapeSuivante() {
-      if (etapeActuelle < configEtapes.length - 1) {
-        etapeActuelle++;
-        afficherEtape();
-      } else {
-        fermerAide();
-      }
-    }
-
-    function fermerAide() {
-      document.querySelectorAll('.highlight-guide').forEach(el => el.classList.remove('highlight-guide'));
-      document.getElementById('onboarding-overlay').classList.remove('active');
     }
 
     async function lancerExperience(mediaUrl, avecSon = false) {
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
-      // Ajout de l'état dans l'historique pour capturer la touche retour
       history.pushState({ arOuvert: true }, "");
 
-      // Nettoyage de l'URL pour la détection du format (.mp4, .webm, .mov)
       const urlPropre = mediaUrl.split('?')[0].toLowerCase();
       isBgVideo = urlPropre.endsWith('.mp4') || urlPropre.endsWith('.webm') || urlPropre.endsWith('.mov');
 

@@ -145,14 +145,14 @@
       100% { opacity: 1; }
     }
 
-    /* --- GUIDAGE SOUPLE ET NET (FLOU MINIME 2PX) --- */
+    /* --- GUIDAGE AVEC BOUTON PARFAITEMENT DEGAGÉ DU FLOU --- */
     .onboarding-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(2px); /* Flou ultra léger pour garder la carte bien nette */
-      -webkit-backdrop-filter: blur(2px);
-      z-index: 999999;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 99999;
       display: none;
     }
     .onboarding-overlay.active {
@@ -162,7 +162,7 @@
     /* Bulle d'explication GPS sous le bouton */
     .gps-info-bubble {
       position: fixed;
-      top: 70px;
+      top: 75px;
       right: 15px;
       width: calc(100% - 30px);
       max-width: 320px;
@@ -170,7 +170,7 @@
       border: 2px solid #d4af37;
       border-radius: 14px;
       padding: 12px 14px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
       z-index: 1000005;
       box-sizing: border-box;
       animation: fadeIn 0.3s ease;
@@ -207,14 +207,17 @@
       float: right;
     }
 
-    /* Encadré Rouge Vif Dynamique sur le bouton GPS */
+    /* Encadré Rouge Vif Nette + Mise au premier plan pour passer AU DESSUS du flou */
     .highlight-guide {
       position: relative !important;
-      z-index: 1000000 !important;
-      outline: 3px solid #ff2a2a !important;
+      z-index: 1000000 !important; /* Passe au-dessus du voile de flou */
+      background: #ffffff !important;
+      color: #000000 !important;
+      outline: 4px solid #ff2a2a !important;
       outline-offset: 3px !important;
-      box-shadow: 0 0 20px rgba(255, 42, 42, 0.9) !important;
+      box-shadow: 0 0 25px rgba(255, 42, 42, 1), 0 0 10px rgba(255, 255, 255, 0.9) !important;
       border-radius: 4px;
+      opacity: 1 !important;
     }
   </style>
 </head>
@@ -452,7 +455,7 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Déclenchement automatique et net du guidage GPS
+      // Déclenchement du guidage net
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
@@ -462,6 +465,10 @@
       const overlay = document.getElementById('onboarding-overlay');
 
       if (btnGps) {
+        // Faire monter le conteneur du bouton Leaflet en z-index
+        if (btnGps.parentElement) {
+          btnGps.parentElement.style.zIndex = "1000000";
+        }
         btnGps.classList.add('highlight-guide');
         overlay.classList.add('active');
       }
@@ -470,7 +477,12 @@
     function fermerGuidageGPS() {
       const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
-      if (btnGps) btnGps.classList.remove('highlight-guide');
+      if (btnGps) {
+        btnGps.classList.remove('highlight-guide');
+        if (btnGps.parentElement) {
+          btnGps.parentElement.style.zIndex = "";
+        }
+      }
       if (overlay) overlay.classList.remove('active');
     }
 

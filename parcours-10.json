@@ -1,1 +1,44 @@
-
+{
+  "id": 10,
+  "titre": "On ne vous a jamais dit pourquoi on a vraiment retrouvé le Titanic",
+  "lieu": "Parcours virtuel",
+  "dur": "Inaccessible sur place",
+  "dist": "N/A",
+  "image": "ima.5900.jpg",
+  "gps": null,
+  "trace": [],
+  "points": [
+    {
+      "nom": "L'Ultime Crépuscule : Les Derniers Moments de l'Insubmersible",
+      "titre_animation": "Avant que le silence éternel des abysses ne l'enveloppe, le géant des mers a livré son dernier souffle dans une nuit glaciale et étoilée. Découvrez ici les instants suspendus de ce majestueux navire, avant qu'il ne disparaisse à jamais dans les profondeurs insondables de l'océan.",
+      "lat": 41.7325,
+      "lng": -49.9469,
+      "video": "photos1parcours10.mp4",
+      "avec_son": true
+    },
+    {
+      "nom": "La Quête de Robert Ballard : Le Pacte avec la Navy",
+      "titre_animation": "Obsédé par l'épave légendaire, l'océanographe Robert Ballard a arpenté le monde pendant des années pour financer son rêve, heurtant sans cesse le refus des investisseurs. Prêt à tout pour percer le mystère des abysses, il pousse alors la porte de la US Navy pour leur proposer un accord audacieux...",
+      "lat": 41.7333,
+      "lng": -49.9460,
+      "video": "photos2parcours10.mp4",
+      "avec_son": true
+    },
+    {
+      "nom": "Opération Secret-Défense : Le Vrai Enjeu de la Mission",
+      "titre_animation": "La US Navy accepte d'aider Ballard... mais à une condition stricte et confidentielle : il doit d'abord retrouver localiser deux sous-marins nucléaires américains mystérieusement engloutis en pleine Guerre Froide. Le Titanic ne devait être qu'une couverture officielle pour cacher une mission militaire de haute sécurité !",
+      "lat": 41.7341,
+      "lng": -49.9451,
+      "video": "photos3parcours10.mp4",
+      "avec_son": true
+    },
+    {
+      "nom": "12 Jours pour l'Histoire : Le Coup de Maître de la Guerre Froide",
+      "titre_animation": "Sa mission militaire accomplie, il ne reste plus à Ballard que 12 petits jours avant d'épuiser son délai. Grâce à l'aval de l'administration Reagan et une technologie capable d'explorer à 3 800 mètres de profondeur, Ballard localise enfin le Titanic, rendant les services secrets soviétiques fous de ne pas avoir décelé cet exploit technologique sans précédent !",
+      "lat": 41.7349,
+      "lng": -49.9442,
+      "video": "photos4parcours10.mp4",
+      "avec_son": true
+    }
+  ]
+}

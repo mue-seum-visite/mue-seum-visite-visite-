@@ -9,17 +9,45 @@
   <!-- Chargement de MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
-  <!-- Configuration et chargement de GoatCounter -->
+  <!-- Configuration et suivi du temps passé GoatCounter -->
   <script>
     (function() {
       var params = new URLSearchParams(window.location.search);
       var id = params.get('id') || 'inconnu';
+      var startTime = Date.now();
+
       window.goatcounter = {
         path: '/parcours-' + id,
         title: 'Parcours ' + id,
         allow_frame: true,
         allow_local: true
       };
+
+      // Fonction d'envoi du temps passé à GoatCounter
+      function envoyerTempsPasse() {
+        if (!window.goatcounter || !window.goatcounter.count) return;
+        var secondsPassed = Math.round((Date.now() - startTime) / 1000);
+        window.goatcounter.count({
+          path: '/temps-parcours-' + id + '?duree_sec=' + secondsPassed,
+          title: 'Temps passé Parcours ' + id + ' (' + secondsPassed + 's)',
+          event: true
+        });
+      }
+
+      // Envoi du temps passé quand le visiteur quitte ou change d'onglet
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          envoyerTempsPasse();
+        }
+      });
+      window.addEventListener('pagehide', envoyerTempsPasse);
+
+      // Ping régulier toutes les 30 secondes pour maintenir le temps actif
+      setInterval(function() {
+        if (document.visibilityState === 'visible') {
+          envoyerTempsPasse();
+        }
+      }, 30000);
     })();
   </script>
   <script data-goatcounter="https://mue-seum.goatcounter.com/count"

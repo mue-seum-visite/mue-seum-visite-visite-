@@ -265,19 +265,19 @@
       <div class="guide-bubble-text">
         Cliquez sur les <b>points bleus</b> répartis sur la carte pour explorer les lieux et <b>rentrer dans l'histoire</b>.
       </div>
-      <button class="btn-guide-ok" onclick="passerAEtapeBoutonAR()">C'est compris</button>
-    </div>
-
-    <!-- ÉTAPE 3 : BOUTON ENTRER DANS L'ÉPOQUE -->
-    <div id="bubble-ar" class="guide-info-bubble" style="bottom: 90px; left: 50%; transform: translateX(-50%); display: none;">
-      <div class="guide-bubble-title">🚀 Voyage temporel</div>
-      <div class="guide-bubble-text">
-        Cliquez sur le bouton <b>« Entrer dans l'époque »</b> pour que la magie de la réalité augmentée opère !
-      </div>
       <button class="btn-guide-ok" onclick="passerAEtapeAccueil()">C'est compris</button>
     </div>
 
-    <!-- ÉTAPE 4 : BOUTON ACCUEIL -->
+    <!-- ÉTAPE SPÉCIALE POP-UP : BOUTON ENTRER DANS L'ÉPOQUE (déclenché UNIQUEMENT à l'ouverture du pop-up) -->
+    <div id="bubble-ar" class="guide-info-bubble" style="bottom: 30px; left: 50%; transform: translateX(-50%); display: none;">
+      <div class="guide-bubble-title">🚀 Voyage temporel</div>
+      <div class="guide-bubble-text">
+        Cliquez sur <b>« Entrer dans l'époque »</b> pour que la magie de la réalité augmentée opère !
+      </div>
+      <button class="btn-guide-ok" onclick="masquerBulleAR()">C'est compris</button>
+    </div>
+
+    <!-- ÉTAPE 3 : BOUTON ACCUEIL -->
     <div id="bubble-accueil" class="guide-info-bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
       <div class="guide-bubble-title">🏠 Explorer d'autres lieux</div>
       <div class="guide-bubble-text">
@@ -414,7 +414,7 @@
         const avecSon = pt.avec_son ? true : false;
         
         const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button id="btn-ar-guide-target" class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
+          ? `<button class="btn-ar btn-ar-target" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
           : '';
 
         const contenuPopup = `
@@ -431,10 +431,12 @@
           marker.on('add', function() {
             if (this._icon) this._icon.id = 'first-blue-marker';
           });
-          marker.on('click', function() {
-            passerAEtapeBoutonAR();
-          });
         }
+
+        // Événement déclenché uniquement quand LE POP-UP S'OUVRE
+        marker.on('popupopen', function() {
+          declencherGuidagePopUp();
+        });
       });
 
       // --- AJOUT : Bouton de contrôle GPS ---
@@ -532,31 +534,45 @@
       }
     }
 
-    function passerAEtapeBoutonAR() {
+    // Déclenché SEULEMENT quand un pop-up est ouvert par l'utilisateur
+    function declencherGuidagePopUp() {
+      // Éteindre le guidage des points bleus
       const firstMarkerIcon = document.getElementById('first-blue-marker');
       if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
       document.getElementById('bubble-points').style.display = 'none';
 
+      // Afficher l'overlay et la bulle d'explication pour le bouton AR
+      const overlay = document.getElementById('onboarding-overlay');
+      if (overlay) overlay.classList.add('active');
+
       const bubbleAr = document.getElementById('bubble-ar');
       if (bubbleAr) bubbleAr.style.display = 'block';
 
-      // Ouvrir automatiquement la pop-up du premier point si elle n'est pas ouverte
-      const firstMarker = document.getElementById('first-blue-marker');
-      if (firstMarker) firstMarker.click();
-
+      // Entourer en rouge le bouton "Entrer dans l'époque" à l'intérieur du pop-up
       setTimeout(() => {
-        const btnArTarget = document.getElementById('btn-ar-guide-target');
+        const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
         if (btnArTarget) btnArTarget.classList.add('highlight-guide');
-      }, 200);
+      }, 100);
+    }
+
+    function masquerBulleAR() {
+      const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
+      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
+      document.getElementById('bubble-ar').style.display = 'none';
+      
+      // Passer automatiquement à l'étape suivante (Bouton Accueil)
+      passerAEtapeAccueil();
     }
 
     function passerAEtapeAccueil() {
-      const btnArTarget = document.getElementById('btn-ar-guide-target');
-      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
+      document.getElementById('bubble-points').style.display = 'none';
       document.getElementById('bubble-ar').style.display = 'none';
 
       const bubbleAccueil = document.getElementById('bubble-accueil');
       if (bubbleAccueil) bubbleAccueil.style.display = 'block';
+
+      const overlay = document.getElementById('onboarding-overlay');
+      if (overlay) overlay.classList.add('active');
 
       const btnAccueil = document.getElementById('btn-accueil-guide');
       if (btnAccueil) {
@@ -571,11 +587,16 @@
       const firstMarkerIcon = document.getElementById('first-blue-marker');
       if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
 
-      const btnArTarget = document.getElementById('btn-ar-guide-target');
+      const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
       if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
 
       const btnAccueil = document.getElementById('btn-accueil-guide');
       if (btnAccueil) btnAccueil.classList.remove('highlight-guide');
+
+      document.getElementById('bubble-gps').style.display = 'none';
+      document.getElementById('bubble-points').style.display = 'none';
+      document.getElementById('bubble-ar').style.display = 'none';
+      document.getElementById('bubble-accueil').style.display = 'none';
 
       const overlay = document.getElementById('onboarding-overlay');
       if (overlay) overlay.classList.remove('active');

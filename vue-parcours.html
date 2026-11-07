@@ -265,10 +265,19 @@
       <div class="guide-bubble-text">
         Cliquez sur les <b>points bleus</b> répartis sur la carte pour explorer les lieux et <b>rentrer dans l'histoire</b>.
       </div>
+      <button class="btn-guide-ok" onclick="passerAEtapeBoutonAR()">C'est compris</button>
+    </div>
+
+    <!-- ÉTAPE 3 : BOUTON ENTRER DANS L'ÉPOQUE -->
+    <div id="bubble-ar" class="guide-info-bubble" style="bottom: 90px; left: 50%; transform: translateX(-50%); display: none;">
+      <div class="guide-bubble-title">🚀 Voyage temporel</div>
+      <div class="guide-bubble-text">
+        Cliquez sur le bouton <b>« Entrer dans l'époque »</b> pour que la magie de la réalité augmentée opère !
+      </div>
       <button class="btn-guide-ok" onclick="passerAEtapeAccueil()">C'est compris</button>
     </div>
 
-    <!-- ÉTAPE 3 : BOUTON ACCUEIL (CENTRÉE AU MILIEU DE L'ÉCRAN) -->
+    <!-- ÉTAPE 4 : BOUTON ACCUEIL -->
     <div id="bubble-accueil" class="guide-info-bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
       <div class="guide-bubble-title">🏠 Explorer d'autres lieux</div>
       <div class="guide-bubble-text">
@@ -405,7 +414,7 @@
         const avecSon = pt.avec_son ? true : false;
         
         const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
+          ? `<button id="btn-ar-guide-target" class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
           : '';
 
         const contenuPopup = `
@@ -423,7 +432,7 @@
             if (this._icon) this._icon.id = 'first-blue-marker';
           });
           marker.on('click', function() {
-            passerAEtapeAccueil();
+            passerAEtapeBoutonAR();
           });
         }
       });
@@ -523,10 +532,28 @@
       }
     }
 
-    function passerAEtapeAccueil() {
+    function passerAEtapeBoutonAR() {
       const firstMarkerIcon = document.getElementById('first-blue-marker');
       if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
       document.getElementById('bubble-points').style.display = 'none';
+
+      const bubbleAr = document.getElementById('bubble-ar');
+      if (bubbleAr) bubbleAr.style.display = 'block';
+
+      // Ouvrir automatiquement la pop-up du premier point si elle n'est pas ouverte
+      const firstMarker = document.getElementById('first-blue-marker');
+      if (firstMarker) firstMarker.click();
+
+      setTimeout(() => {
+        const btnArTarget = document.getElementById('btn-ar-guide-target');
+        if (btnArTarget) btnArTarget.classList.add('highlight-guide');
+      }, 200);
+    }
+
+    function passerAEtapeAccueil() {
+      const btnArTarget = document.getElementById('btn-ar-guide-target');
+      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
+      document.getElementById('bubble-ar').style.display = 'none';
 
       const bubbleAccueil = document.getElementById('bubble-accueil');
       if (bubbleAccueil) bubbleAccueil.style.display = 'block';
@@ -543,6 +570,9 @@
 
       const firstMarkerIcon = document.getElementById('first-blue-marker');
       if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
+
+      const btnArTarget = document.getElementById('btn-ar-guide-target');
+      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
 
       const btnAccueil = document.getElementById('btn-accueil-guide');
       if (btnAccueil) btnAccueil.classList.remove('highlight-guide');

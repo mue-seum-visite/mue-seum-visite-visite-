@@ -9,13 +9,15 @@
   <!-- Chargement de MediaPipe Selfie Segmentation -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
-  <!-- Configuration et suivi du temps passé GoatCounter -->
+  <!-- Configuration et suivi unique de la durée de session GoatCounter -->
   <script>
     (function() {
       var params = new URLSearchParams(window.location.search);
       var id = params.get('id') || 'inconnu';
       var startTime = Date.now();
+      var envoyed = false;
 
+      // Configuration de base : 1 seule visite comptabilisée à l'arrivée
       window.goatcounter = {
         path: '/parcours-' + id,
         title: 'Parcours ' + id,
@@ -23,31 +25,42 @@
         allow_local: true
       };
 
-      // Fonction d'envoi du temps passé à GoatCounter
-      function envoyerTempsPasse() {
-        if (!window.goatcounter || !window.goatcounter.count) return;
-        var secondsPassed = Math.round((Date.now() - startTime) / 1000);
-        window.goatcounter.count({
-          path: '/temps-parcours-' + id + '?duree_sec=' + secondsPassed,
-          title: 'Temps passé Parcours ' + id + ' (' + secondsPassed + 's)',
-          event: true
-        });
+      // Fonction d'enregistrement unique du temps total au moment du départ
+      function enregistrerDureeTotale() {
+        if (envoyed) return;
+        envoyed = true;
+
+        var dureeSec = Math.round((Date.now() - startTime) / 1000);
+        
+        // Envoi silencieux et garanti même si l'onglet se ferme immédiatement
+        if (navigator.sendBeacon) {
+          var data = new FormData();
+          var payload = {
+            no_count: true,
+            events: [{
+              path: '/temps-parcours-' + id,
+              title: 'Durée ' + dureeSec + 's (Parcours ' + id + ')',
+              event: true
+            }]
+          };
+          // Transmis proprement à GoatCounter
+          navigator.sendBeacon('https://mue-seum.goatcounter.com/count', JSON.stringify(payload));
+        } else if (window.goatcounter && window.goatcounter.count) {
+          window.goatcounter.count({
+            path: '/temps-parcours-' + id,
+            title: 'Durée ' + dureeSec + 's (Parcours ' + id + ')',
+            event: true
+          });
+        }
       }
 
-      // Envoi du temps passé quand le visiteur quitte ou change d'onglet
+      // Déclencheur unique quand l'utilisateur quitte ou masque la page
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {
-          envoyerTempsPasse();
+          enregistrerDureeTotale();
         }
       });
-      window.addEventListener('pagehide', envoyerTempsPasse);
-
-      // Ping régulier toutes les 30 secondes pour maintenir le temps actif
-      setInterval(function() {
-        if (document.visibilityState === 'visible') {
-          envoyerTempsPasse();
-        }
-      }, 30000);
+      window.addEventListener('pagehide', enregistrerDureeTotale);
     })();
   </script>
   <script data-goatcounter="https://mue-seum.goatcounter.com/count"

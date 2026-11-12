@@ -1,6 +1,6 @@
 {
   "id": 7,
-  "titre": "Statues & Chef-d'œuvre : L'Histoire Sculptée de Charleroi",
+  "titre": "Secrets d'Histoire & L'Histoire Sculptée de Charleroi",
   "lieu": "Charleroi",
   "dur": "30 min",
   "dist": "2.0 km",
@@ -39,6 +39,14 @@
       "lng": 4.448543,
       "video": "photos4parcour7.jpg",
       "avec_son": true
+    },
+    {
+      "nom": "30 mars 1862 : La Dernière Guillotine Civile de Belgique",
+      "titre_animation": "Le samedi 30 mars 1862, cette place (alors Place de la Ville-Haute) fut le théâtre de la toute dernière exécution publique par guillotine pour un crime civil en Belgique. Les condamnés, Jean-Baptiste Boucher et Auguste Leclercq, faisaient partie de la redoutable 'Bande noire', une troupe de 14 malfaiteurs qui terrorisait l'Entre-Sambre-et-Meuse le visage grimé de farine et de cirage. Alors que la peine de mort faisait débat — Victor Hugo lui-même aurait écrit au roi Léopold Ier pour demander leur grâce —, près de 30 000 curieux envahirent le centre-ville dès l'aube pour assister à la sentence.",
+      "lat": 50.411567,
+      "lng": 4.444678,
+      "video": "",
+      "avec_son": false
     }
   ]
 }

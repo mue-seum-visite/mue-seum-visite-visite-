@@ -47,6 +47,14 @@
       "lng": 4.444678,
       "video": "",
       "avec_son": false
+    },
+    {
+      "nom": "Découvrir la place Vauban en 1695",
+      "titre_animation": "Découvrir la place Vauban en 1695",
+      "lat": 50.411789,
+      "lng": 4.444206,
+      "video": "photos6parcoures7.mp4",
+      "avec_son": true
     }
   ]
 }

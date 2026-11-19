@@ -293,8 +293,8 @@
   <script>
     let parcoursData = [];
 
-    // Génération automatique des noms de fichiers de parcours-1.json à parcours-60.json
-    const listeFichiers = Array.from({ length: 60 }, (_, i) => `parcours-${i + 1}.json`);
+    // Génération automatique des noms de fichiers de parcours-0.json à parcours-60.json
+    const listeFichiers = Array.from({ length: 61 }, (_, i) => `parcours-${i}.json`);
 
     // Chargement dynamique de chaque fichier individuel s'il existe
     Promise.all(

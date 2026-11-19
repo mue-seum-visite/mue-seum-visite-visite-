@@ -1,0 +1,20 @@
+{
+  "id": 0,
+  "titre": "Le Vol de la Joconde",
+  "lieu": "Paris, Musée du Louvre",
+  "dur": "5 min",
+  "dist": "À distance",
+  "image": "06b71af6-9721-4cb5-aca6-204f365a6c46.jpg",
+  "gps": "",
+  "trace": [],
+  "points": [
+    {
+      "nom": "21 août 1911 : La Disparition du Chef-d'Œuvre",
+      "titre_animation": "Retrouvez l'incroyable histoire du vol de la Joconde en 1911 : comment le plus célèbre tableau de Léonard de Vinci a disparu du Salon Carré du Louvre en plein jour, plongeant le monde entier dans la stupeur.",
+      "lat": 48.860611,
+      "lng": 2.337644,
+      "video": "59cfb39e-a138-467b-aa36-8d1c268e3333.mp4",
+      "avec_son": true
+    }
+  ]
+}

@@ -90,6 +90,20 @@
       margin-top: 6px;
     }
 
+    /* Bouton GPS pour la bulle finale "Me rendre à la balade" */
+    .btn-gps-final {
+      display: inline-block;
+      background-color: #d4af37;
+      color: #000000 !important;
+      text-decoration: none;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
     /* Encart question GPS dans le pop-up du point 1 */
     .popup-gps-box {
       background: #1c1c1e;
@@ -159,6 +173,20 @@
     @keyframes goldPulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.18); }
+    }
+
+    /* Flèche rouge de position utilisateur */
+    .user-red-arrow-icon {
+      background: transparent;
+      border: none;
+    }
+    .user-red-arrow {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.75));
     }
 
     #ar-overlay {
@@ -371,8 +399,21 @@
     }
 
     function initialiserCarte(data) {
-      const points = data.points;
-      if (!points || points.length === 0) return;
+      const points = [...(data.points || [])];
+      if (points.length === 0) return;
+
+      // Ajout automatique de la bulle supplémentaire "Me rendre à la balade" si un lien GPS existe
+      if (data.gps && data.gps.trim() !== '') {
+        points.push({
+          nom: "Me rendre à la balade",
+          titre_animation: "Envie de vivre ce parcours sur place ? Lancez votre GPS pour rejoindre le point de départ.",
+          lat: points[0].lat - 0.00025,
+          lng: points[0].lng + 0.00025,
+          video: "",
+          isGpsFinal: true,
+          gpsUrl: data.gps.trim()
+        });
+      }
 
       const map = L.map('map').setView([points[0].lat, points[0].lng], 15);
       mapInstance = map;
@@ -445,15 +486,18 @@
         const titreAnim = pt.titre_animation || pt.nom;
         const avecSon = pt.avec_son ? true : false;
         
-        const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
-          : '';
+        let boutonHtml = '';
+        if (pt.isGpsFinal && pt.gpsUrl) {
+          boutonHtml = `<a href="${pt.gpsUrl}" target="_blank" class="btn-gps-final">📍 Me rendre à la balade</a>`;
+        } else if (pt.video && pt.video.trim() !== '') {
+          boutonHtml = `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>`;
+        }
 
         // Question de repérage sur le parcours uniquement dans le Point 1
         const questionSurPlaceHtml = (index === 0)
           ? `<div id="popup-gps-question" class="popup-gps-box">
                <div>📍 <b>Êtes-vous sur place ?</b></div>
-               <div style="font-size: 0.74rem; color: #ccc; margin-top: 2px;">Afficher ma position en direct sur le tracé</div>
+               <div style="font-size: 0.74rem; color: #ccc; margin-top: 2px;">Afficher ma flèche rouge sur le tracé</div>
                <div class="popup-gps-actions">
                  <button class="btn-gps-no" onclick="repondreSurPlace(false)">Non</button>
                  <button class="btn-gps-yes" onclick="repondreSurPlace(true)">Oui</button>
@@ -493,17 +537,22 @@
       // Mettre en avant le Point 1 dès l'arrivée sur la carte
       setTimeout(() => mettreEnAvantPoint(0, false), 300);
 
-      // Suivi de la position sur le parcours (point bleu)
+      // Icône flèche rouge pour la position de l'utilisateur
+      const redArrowIcon = L.divIcon({
+        className: 'user-red-arrow-icon',
+        html: `<div class="user-red-arrow">
+                 <svg width="28" height="28" viewBox="0 0 24 24">
+                   <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#ff2a2a" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+                 </svg>
+               </div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      // Suivi de la position sur le parcours (flèche rouge)
       map.on('locationfound', function(e) {
         if (!userMarker) {
-          userMarker = L.circleMarker(e.latlng, {
-            radius: 8,
-            fillColor: '#1a73e8',
-            color: '#ffffff',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 0.95
-          }).addTo(map).bindPopup("Vous êtes ici");
+          userMarker = L.marker(e.latlng, { icon: redArrowIcon }).addTo(map).bindPopup("Vous êtes ici");
         } else {
           userMarker.setLatLng(e.latlng);
         }
@@ -533,7 +582,7 @@
           isTracking = true;
         }
         if (box) {
-          box.innerHTML = `<div style="color: #d4af37; font-weight: bold;">✅ Position en direct activée sur le parcours</div>`;
+          box.innerHTML = `<div style="color: #d4af37; font-weight: bold;">✅ Flèche rouge activée sur le parcours</div>`;
         }
       } else {
         if (box) {

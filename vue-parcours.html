@@ -61,7 +61,7 @@
           async src="//gc.zgo.at/count.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+- { box-sizing: border-box; }
     body, html {
       margin: 0;
       padding: 0;
@@ -173,6 +173,26 @@
     @keyframes goldPulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.18); }
+    }
+
+    /* Clignotement rouge du bouton Accueil à la fermeture de la dernière animation */
+    .blink-accueil-red {
+      animation: accueilRedBlink 0.9s infinite ease-in-out !important;
+    }
+
+    @keyframes accueilRedBlink {
+      0%, 100% {
+        background-color: #d4af37 !important;
+        color: #000000 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+        transform: scale(1);
+      }
+      50% {
+        background-color: #ff2a2a !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 18px rgba(255, 42, 42, 1), 0 0 6px #ffffff !important;
+        transform: scale(1.08);
+      }
     }
 
     /* Flèche rouge de position utilisateur */
@@ -370,6 +390,7 @@
     let isTracking = false;
     let markersList = [];
     let etapeCouranteIndex = 0;
+    let parcoursTermine = false;
 
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
@@ -525,11 +546,16 @@
         const marker = L.marker([pt.lat, pt.lng], { icon: numberIcon }).addTo(map).bindPopup(contenuPopup);
         markersList.push(marker);
 
-        // Quand on ferme un point, le point suivant prend le relais en doré
+        // Quand on ferme un point, le point suivant prend le relais en doré — ou clignotement rouge d'Accueil à la fin
         marker.on('popupclose', function() {
-          if (index === etapeCouranteIndex && etapeCouranteIndex < markersList.length - 1) {
-            etapeCouranteIndex++;
-            mettreEnAvantPoint(etapeCouranteIndex, true);
+          if (index === etapeCouranteIndex) {
+            if (etapeCouranteIndex < markersList.length - 1) {
+              etapeCouranteIndex++;
+              mettreEnAvantPoint(etapeCouranteIndex, true);
+            } else {
+              parcoursTermine = true;
+              activerClignotementAccueil();
+            }
           }
         });
       });
@@ -561,6 +587,14 @@
       map.on('locationerror', function() {
         alert("Impossible d'accéder à votre position. Vérifiez l'autorisation GPS de votre navigateur.");
       });
+    }
+
+    function activerClignotementAccueil() {
+      document.querySelectorAll('.marker-pin').forEach(el => el.classList.remove('active-step'));
+      const btnAccueil = document.getElementById('btn-accueil-guide');
+      if (btnAccueil) {
+        btnAccueil.classList.add('blink-accueil-red');
+      }
     }
 
     function mettreEnAvantPoint(index, centrerCarte) {
@@ -725,6 +759,10 @@
         cameraStream = null;
       }
       arOverlay.style.display = 'none';
+
+      if (parcoursTermine) {
+        activerClignotementAccueil();
+      }
     }
 
     function telechargerPhoto() {

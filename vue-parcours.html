@@ -67,7 +67,7 @@
           async src="//gc.zgo.at/count.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+- { box-sizing: border-box; }
     body, html {
       margin: 0;
       padding: 0;
@@ -243,6 +243,16 @@
       cursor: pointer;
       float: right;
     }
+    .btn-guide-secondary {
+      background: transparent;
+      color: #ccc;
+      border: 1px solid #555;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
 
     /* Encadrés rouges clairs de surbrillance */
     .highlight-guide {
@@ -319,13 +329,16 @@
   <!-- COMPOSANT OVERLAY DE GUIDAGE -->
   <div id="onboarding-overlay" class="onboarding-overlay">
     
-    <!-- ÉTAPE 1 : GPS -->
-    <div id="bubble-gps" class="guide-info-bubble" style="top: 75px; right: 15px;">
-      <div class="guide-bubble-title">📍 Guidage sur le terrain</div>
+    <!-- ÉTAPE 1 : QUESTION SUR PLACE / GÉOLOCALISATION -->
+    <div id="bubble-gps" class="guide-info-bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+      <div class="guide-bubble-title">📍 Êtes-vous sur place ?</div>
       <div class="guide-bubble-text">
-        Si vous vous rendez sur place, <b>lancez le GPS</b> pour vous guider. Vous serez représenté sur la carte par une <b>petite flèche bleue</b>.
+        Si vous souhaitez vous géolocaliser pendant le parcours (flèche bleue sur la carte), appuyez sur <b>Oui</b>.
       </div>
-      <button class="btn-guide-ok" onclick="passerAEtapePoints()">C'est compris</button>
+      <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 12px;">
+        <button class="btn-guide-secondary" onclick="passerAEtapePoints()">Non, à distance</button>
+        <button class="btn-guide-ok" style="float: none;" onclick="activerGeolocalisationEtContinuer()">Oui, me localiser</button>
+      </div>
     </div>
 
     <!-- ÉTAPE 2 : POINTS BLEUS DE L'HISTOIRE -->
@@ -379,6 +392,7 @@
     let isRecording = false;
 
     // Variables pour la géolocalisation GPS
+    let mapInstance = null;
     let userMarker = null;
     let isTracking = false;
 
@@ -415,6 +429,7 @@
       if (!points || points.length === 0) return;
 
       const map = L.map('map').setView([points[0].lat, points[0].lng], 14);
+      mapInstance = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -508,52 +523,6 @@
         });
       });
 
-      // --- AJOUT : Bouton de contrôle GPS ---
-      const gpsControl = L.control({ position: 'topright' });
-      gpsControl.onAdd = function() {
-        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        div.innerHTML = `
-          <button id="btn-gps" style="
-            background: #ffffff; 
-            color: #000000; 
-            border: none; 
-            padding: 8px 12px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 0.85rem;
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          ">📍 Lancer le GPS</button>
-        `;
-        return div;
-      };
-      gpsControl.addTo(map);
-
-      // Événement clic sur le bouton GPS
-      document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'btn-gps') {
-          passerAEtapePoints();
-
-          if (!isTracking) {
-            map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
-            e.target.innerHTML = '🛑 Arrêter le GPS';
-            e.target.style.background = '#e74c3c';
-            e.target.style.color = '#ffffff';
-            isTracking = true;
-          } else {
-            map.stopLocate();
-            if (userMarker) {
-              map.removeLayer(userMarker);
-              userMarker = null;
-            }
-            e.target.innerHTML = '📍 Lancer le GPS';
-            e.target.style.background = '#ffffff';
-            e.target.style.color = '#000000';
-            isTracking = false;
-          }
-        }
-      });
-
       // Mettre à jour la position de l'utilisateur (Point Bleu)
       map.on('locationfound', function(e) {
         if (!userMarker) {
@@ -574,24 +543,27 @@
         alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
       });
 
-      // Lancement automatique Étape 1 (GPS)
+      // Lancement automatique Étape 1 (Question sur place / GPS)
       setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
     // --- SYSTEME DE GUIDAGE ÉTAPE PAR ÉTAPE ---
     function demarrerGuidageGPS() {
-      const btnGps = document.getElementById('btn-gps');
       const overlay = document.getElementById('onboarding-overlay');
-
-      if (btnGps) {
-        btnGps.classList.add('highlight-guide');
+      if (overlay) {
         overlay.classList.add('active');
       }
     }
 
+    function activerGeolocalisationEtContinuer() {
+      if (mapInstance && !isTracking) {
+        mapInstance.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
+        isTracking = true;
+      }
+      passerAEtapePoints();
+    }
+
     function passerAEtapePoints() {
-      const btnGps = document.getElementById('btn-gps');
-      if (btnGps) btnGps.classList.remove('highlight-guide');
       document.getElementById('bubble-gps').style.display = 'none';
 
       const bubblePoints = document.getElementById('bubble-points');
@@ -645,9 +617,6 @@
     }
 
     function fermerToutLeGuidage() {
-      const btnGps = document.getElementById('btn-gps');
-      if (btnGps) btnGps.classList.remove('highlight-guide');
-
       const firstMarkerIcon = document.getElementById('first-blue-marker');
       if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
 
@@ -683,8 +652,6 @@
 
     async function lancerExperience(mediaUrl, avecSon = false) {
       fermerToutLeGuidage();
-      const gpsBtnContainer = document.querySelector('.leaflet-top.leaflet-right');
-      if (gpsBtnContainer) gpsBtnContainer.style.display = 'none';
 
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
@@ -809,9 +776,6 @@
         cameraStream = null;
       }
       arOverlay.style.display = 'none';
-
-      const gpsBtnContainer = document.querySelector('.leaflet-top.leaflet-right');
-      if (gpsBtnContainer) gpsBtnContainer.style.display = 'block';
     }
 
     function telechargerPhoto() {

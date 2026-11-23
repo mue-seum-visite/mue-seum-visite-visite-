@@ -189,7 +189,7 @@
       margin-bottom: 24px;
     }
 
-    /* Étapes 2 & 3 : Infobulle fixe en haut de page */
+    /* Étape 2 : Infobulle fixe en haut de page */
     .top-bubble {
       position: fixed;
       top: 20px;
@@ -230,7 +230,7 @@
       cursor: pointer;
     }
 
-    /* Surbrillance rouge dynamique */
+    /* Surbrillance rouge dynamique (non cliquable pendant le guide) */
     .highlight-guide {
       position: relative !important;
       z-index: 10000 !important;
@@ -238,6 +238,8 @@
       outline-offset: 3px !important;
       box-shadow: 0 0 18px rgba(255, 42, 42, 0.8) !important;
       border-radius: 12px;
+      pointer-events: none !important;
+      cursor: default !important;
     }
   </style>
 </head>
@@ -266,7 +268,7 @@
     <!-- ÉTAPE 1 : CAPSULE DE BIENVENUE -->
     <div id="step-modal" class="modal-card">
       <div class="modal-icon">🗺️</div>
-      <div class="modal-badge">Étape 1 / 3 — Bienvenue</div>
+      <div class="modal-badge">Étape 1 / 2 — Bienvenue</div>
       <div class="modal-title">Explorez à votre rythme</div>
       <div class="modal-text">
         MUE.SÉUM s'utilise <b>sur le terrain OU directement depuis chez vous</b> ! Parcourez la liste pour choisir la balade historique de votre choix.
@@ -277,9 +279,9 @@
       </div>
     </div>
 
-    <!-- ÉTAPES 2 & 3 : BULLE SUPÉRIEURE AVEC SURBRILLANCE ROUGE -->
+    <!-- ÉTAPE 2 : BULLE SUPÉRIEURE AVEC SURBRILLANCE ROUGE -->
     <div id="step-bubble" class="top-bubble" style="display: none;">
-      <div id="bubble-badge" class="modal-badge">Étape 2 / 3</div>
+      <div id="bubble-badge" class="modal-badge">Étape 2 / 2</div>
       <div id="bubble-title" class="modal-title">Titre</div>
       <div id="bubble-text" class="modal-text">Texte explicatif...</div>
       <div class="guide-actions">
@@ -358,15 +360,8 @@
         type: "modal" // Étape 1 : Modale centrée fixe
       },
       {
-        type: "highlight", // Étape 2 : Surbrillance bouton GPS
-        badge: "Étape 2 / 3 — Sur le terrain",
-        title: "Bouton « Me rendre à la balade » 📍",
-        text: "Vous souhaitez vous rendre sur place ? Ce bouton (entouré en rouge) ouvre votre GPS (Waze, Google Maps...) jusqu'au départ.",
-        targetClass: "btn-gps"
-      },
-      {
-        type: "highlight", // Étape 3 : Surbrillance bouton Découvrir",
-        badge: "Étape 3 / 3 — Immersion",
+        type: "highlight", // Étape 2 : Surbrillance bouton Découvrir
+        badge: "Étape 2 / 2 — Immersion",
         title: "Bouton « Découvrir ce parcours » 🥾",
         text: "Que vous soyez <b>sur place ou chez vous</b>, ce bouton (entouré en rouge) ouvre la carte interactive pour commencer l'aventure !",
         targetClass: "btn-discover"

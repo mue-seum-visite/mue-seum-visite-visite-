@@ -329,7 +329,6 @@
             <div class="card-title">${item.titre}</div>
             ${item.image ? `<img src="${item.image}" class="card-img" alt="">` : ''}
             <div class="card-details">${item.lieu} • ${item.dist} • ${item.dur}</div>
-            ${item.gps ? `<a href="${item.gps}" target="_blank" class="btn-gps">📍 Me rendre à la balade</a>` : ''}
             <a href="vue-parcours.html?id=${item.id}" class="btn-discover">🗺️ Découvrir ce parcours</a>
           </div>
         `;

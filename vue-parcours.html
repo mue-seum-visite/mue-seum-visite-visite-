@@ -17,7 +17,6 @@
       var startTime = Date.now();
       var envoyed = false;
 
-      // Configuration de base : 1 seule visite comptabilisée à l'arrivée
       window.goatcounter = {
         path: '/parcours-' + id,
         title: 'Parcours ' + id,
@@ -25,16 +24,13 @@
         allow_local: true
       };
 
-      // Fonction d'enregistrement unique du temps total au moment du départ
       function enregistrerDureeTotale() {
         if (envoyed) return;
         envoyed = true;
 
         var dureeSec = Math.round((Date.now() - startTime) / 1000);
         
-        // Envoi silencieux et garanti même si l'onglet se ferme immédiatement
         if (navigator.sendBeacon) {
-          var data = new FormData();
           var payload = {
             no_count: true,
             events: [{
@@ -43,7 +39,6 @@
               event: true
             }]
           };
-          // Transmis proprement à GoatCounter
           navigator.sendBeacon('https://mue-seum.goatcounter.com/count', JSON.stringify(payload));
         } else if (window.goatcounter && window.goatcounter.count) {
           window.goatcounter.count({
@@ -54,7 +49,6 @@
         }
       }
 
-      // Déclencheur unique quand l'utilisateur quitte ou masque la page
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {
           enregistrerDureeTotale();
@@ -67,7 +61,7 @@
           async src="//gc.zgo.at/count.js"></script>
 
   <style>
-- { box-sizing: border-box; }
+    * { box-sizing: border-box; }
     body, html {
       margin: 0;
       padding: 0;
@@ -84,7 +78,7 @@
       height: 100vh;
     }
 
-    .popup-content { text-align: center; color: #000; }
+    .popup-content { text-align: center; color: #000; min-width: 210px; }
     .btn-ar {
       background-color: #d4af37;
       color: #000;
@@ -95,19 +89,76 @@
       cursor: pointer;
       margin-top: 6px;
     }
-    
-    /* Bouton cliquable pour les liens d'itinéraire dans les popups */
-    .btn-gps-link {
-      display: inline-block;
-      background-color: #1a73e8;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 20px;
+
+    /* Encart question GPS dans le pop-up du point 1 */
+    .popup-gps-box {
+      background: #1c1c1e;
+      color: #ffffff;
+      border: 1.5px solid #d4af37;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+    .popup-gps-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .btn-gps-yes {
+      background: #d4af37;
+      color: #000;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 14px;
       font-weight: bold;
-      font-size: 0.85rem;
-      margin-top: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .btn-gps-no {
+      background: transparent;
+      color: #ccc;
+      border: 1px solid #666;
+      padding: 5px 12px;
+      border-radius: 14px;
+      font-weight: bold;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    /* Marqueurs bleus numérotés */
+    .custom-num-marker {
+      background: transparent;
+      border: none;
+    }
+    .marker-pin {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a73e8;
+      color: #ffffff;
+      border: 2.5px solid #ffffff;
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    /* Point actif guidé : halo doré (sans rouge) */
+    .marker-pin.active-step {
+      background: #1a73e8;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 5px rgba(212, 175, 55, 0.45), 0 0 16px rgba(212, 175, 55, 0.95);
+      animation: goldPulse 1.6s infinite ease-in-out;
+    }
+
+    @keyframes goldPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); }
     }
 
     #ar-overlay {
@@ -186,38 +237,32 @@
       100% { opacity: 1; }
     }
 
-    /* --- OVERLAY DU GUIDAGE INITIAL --- */
-    .onboarding-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 99999;
-      display: none;
-    }
-    .onboarding-overlay.active {
-      display: block;
+    .highlight-guide {
+      position: relative !important;
+      z-index: 1000000 !important;
+      outline: 3px solid #d4af37 !important;
+      outline-offset: 3px !important;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.9) !important;
+      border-radius: 40px;
     }
 
-    /* Bulles d'explication de guidage */
-    .guide-info-bubble {
-      position: fixed;
-      width: calc(100% - 30px);
-      max-width: 320px;
-      background: #1c1c1e;
+    /* Bulle spéciale Réalité Augmentée */
+    .ar-guide-bubble {
+      position: absolute;
+      bottom: calc(160px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 40px);
+      max-width: 330px;
+      background: rgba(28, 28, 30, 0.92);
       border: 2px solid #d4af37;
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 16px;
+      padding: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-      z-index: 1000005;
+      z-index: 20;
       box-sizing: border-box;
-      animation: fadeIn 0.3s ease;
+      text-align: center;
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     .guide-bubble-title {
       font-size: 0.85rem;
       font-weight: bold;
@@ -241,62 +286,6 @@
       font-weight: bold;
       font-size: 0.8rem;
       cursor: pointer;
-      float: right;
-    }
-    .btn-guide-secondary {
-      background: transparent;
-      color: #ccc;
-      border: 1px solid #555;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    /* Encadrés rouges clairs de surbrillance */
-    .highlight-guide {
-      position: relative !important;
-      z-index: 1000000 !important;
-      outline: 4px solid #ff2a2a !important;
-      outline-offset: 3px !important;
-      box-shadow: 0 0 25px rgba(255, 42, 42, 1), 0 0 10px rgba(255, 255, 255, 1) !important;
-      border-radius: 4px;
-      opacity: 1 !important;
-    }
-
-    /* Animation pulsante sur l'icône de point bleu ciblée */
-    .highlight-marker {
-      z-index: 1000000 !important;
-      filter: drop-shadow(0 0 12px #ff2a2a) drop-shadow(0 0 20px #ff2a2a) !important;
-      animation: markerPulse 1.5s infinite ease-in-out;
-    }
-    @keyframes markerPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.25); }
-    }
-
-    .leaflet-top.leaflet-right, .leaflet-top.leaflet-left {
-      z-index: 1000000;
-    }
-
-    /* Bulle spéciale Réalité Augmentée */
-    .ar-guide-bubble {
-      position: absolute;
-      bottom: calc(160px + env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 40px);
-      max-width: 330px;
-      background: rgba(28, 28, 30, 0.92);
-      border: 2px solid #d4af37;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-      z-index: 20;
-      box-sizing: border-box;
-      text-align: center;
-      animation: fadeIn 0.3s ease;
     }
   </style>
 </head>
@@ -317,57 +306,13 @@
       <div class="guide-bubble-text">
         Pensez à vous <b>prendre en photo souvenir 📸 ou à vous filmer 🎥</b> pour garder ce voyage temporel et l'enregistrer dans votre téléphone !
       </div>
-      <button class="btn-guide-ok" style="float: none; display: inline-block; margin-top: 4px;" onclick="masquerGuidageRA()">C'est compris !</button>
+      <button class="btn-guide-ok" onclick="masquerGuidageRA()">C'est compris !</button>
     </div>
 
     <div class="ar-controls" id="ar-controls-bar">
       <button class="btn-capture" onclick="telechargerPhoto(); masquerGuidageRA();">📸 Photo</button>
       <button class="btn-record" id="btn-rec" onclick="basculerEnregistrement(); masquerGuidageRA();">🎥 Filmer</button>
     </div>
-  </div>
-
-  <!-- COMPOSANT OVERLAY DE GUIDAGE -->
-  <div id="onboarding-overlay" class="onboarding-overlay">
-    
-    <!-- ÉTAPE 1 : QUESTION SUR PLACE / GÉOLOCALISATION -->
-    <div id="bubble-gps" class="guide-info-bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-      <div class="guide-bubble-title">📍 Êtes-vous sur place ?</div>
-      <div class="guide-bubble-text">
-        Si vous souhaitez vous géolocaliser pendant le parcours (flèche bleue sur la carte), appuyez sur <b>Oui</b>.
-      </div>
-      <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 12px;">
-        <button class="btn-guide-secondary" onclick="passerAEtapePoints()">Non, à distance</button>
-        <button class="btn-guide-ok" style="float: none;" onclick="activerGeolocalisationEtContinuer()">Oui, me localiser</button>
-      </div>
-    </div>
-
-    <!-- ÉTAPE 2 : POINTS BLEUS DE L'HISTOIRE -->
-    <div id="bubble-points" class="guide-info-bubble" style="bottom: 80px; left: 50%; transform: translateX(-50%); display: none;">
-      <div class="guide-bubble-title">🔵 Points d'histoire</div>
-      <div class="guide-bubble-text">
-        Cliquez sur les <b>points bleus</b> répartis sur la carte pour explorer les lieux et <b>rentrer dans l'histoire</b>.
-      </div>
-      <button class="btn-guide-ok" onclick="passerAEtapeAccueil()">C'est compris</button>
-    </div>
-
-    <!-- ÉTAPE SPÉCIALE POP-UP : BOUTON ENTRER DANS L'ÉPOQUE (déclenché UNIQUEMENT à l'ouverture du pop-up) -->
-    <div id="bubble-ar" class="guide-info-bubble" style="bottom: 30px; left: 50%; transform: translateX(-50%); display: none;">
-      <div class="guide-bubble-title">🚀 Voyage temporel</div>
-      <div class="guide-bubble-text">
-        Cliquez sur <b>« Entrer dans l'époque »</b> pour que la magie de la réalité augmentée opère !
-      </div>
-      <button class="btn-guide-ok" onclick="masquerBulleAR()">C'est compris</button>
-    </div>
-
-    <!-- ÉTAPE 3 : BOUTON ACCUEIL -->
-    <div id="bubble-accueil" class="guide-info-bubble" style="top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
-      <div class="guide-bubble-title">🏠 Explorer d'autres lieux</div>
-      <div class="guide-bubble-text">
-        Appuyez sur le bouton <b>Accueil</b> à tout moment pour revenir à la liste et <b>découvrir d'autres parcours et histoires</b>.
-      </div>
-      <button class="btn-guide-ok" onclick="fermerToutLeGuidage()">Terminer</button>
-    </div>
-
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -391,15 +336,16 @@
     let recordedChunks = [];
     let isRecording = false;
 
-    // Variables pour la géolocalisation GPS
+    // Variables pour la géolocalisation et le guidage séquentiel
     let mapInstance = null;
     let userMarker = null;
     let isTracking = false;
+    let markersList = [];
+    let etapeCouranteIndex = 0;
 
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
 
-    // Sécurisation du retour navigateur (Option 1)
     window.onpopstate = function(event) {
       const arOverlay = document.getElementById('ar-overlay');
       if (arOverlay && arOverlay.style.display === 'block') {
@@ -428,7 +374,7 @@
       const points = data.points;
       if (!points || points.length === 0) return;
 
-      const map = L.map('map').setView([points[0].lat, points[0].lng], 14);
+      const map = L.map('map').setView([points[0].lat, points[0].lng], 15);
       mapInstance = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -436,7 +382,7 @@
         attribution: '© OpenStreetMap'
       }).addTo(map);
 
-      // --- AJOUT : Bouton fixe "Accueil" ---
+      // Bouton fixe "Accueil"
       const backControl = L.control({ position: 'topleft' });
       backControl.onAdd = function() {
         const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
@@ -457,7 +403,7 @@
       };
       backControl.addTo(map);
 
-      // --- AJOUT : Badge Titre en bas à gauche ---
+      // Badge Titre en bas à gauche
       const titleControl = L.control({ position: 'bottomleft' });
       titleControl.onAdd = function() {
         const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
@@ -481,158 +427,119 @@
       };
       titleControl.addTo(map);
 
-      // --- AJOUT : Dessin de la ligne du tracé si "trace" est présent ---
+      // Dessin de la ligne du tracé si "trace" est présent
       if (data.trace && data.trace.length > 0) {
         const routePath = L.polyline(data.trace, {
-          color: '#d4af37',   // Couleur dorée assortie à votre charte MUE.SÉUM
-          weight: 4,          // Épaisseur de la ligne
+          color: '#d4af37',
+          weight: 4,
           opacity: 0.8,
-          dashArray: '8, 8'   // Ligne pointillée
+          dashArray: '8, 8'
         }).addTo(map);
 
         map.fitBounds(routePath.getBounds(), { padding: [40, 40] });
       }
 
+      // Création des marqueurs numérotés 1, 2, 3...
       points.forEach((pt, index) => {
+        const numero = index + 1;
         const titreAnim = pt.titre_animation || pt.nom;
         const avecSon = pt.avec_son ? true : false;
         
         const boutonHtml = (pt.video && pt.video.trim() !== '') 
-          ? `<button class="btn-ar btn-ar-target" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
+          ? `<button class="btn-ar" onclick="lancerExperience('${pt.video}', ${avecSon})">🚀 Entrer dans l'époque</button>` 
+          : '';
+
+        // Question de repérage sur le parcours uniquement dans le Point 1
+        const questionSurPlaceHtml = (index === 0)
+          ? `<div id="popup-gps-question" class="popup-gps-box">
+               <div>📍 <b>Êtes-vous sur place ?</b></div>
+               <div style="font-size: 0.74rem; color: #ccc; margin-top: 2px;">Afficher ma position en direct sur le tracé</div>
+               <div class="popup-gps-actions">
+                 <button class="btn-gps-no" onclick="repondreSurPlace(false)">Non</button>
+                 <button class="btn-gps-yes" onclick="repondreSurPlace(true)">Oui</button>
+               </div>
+             </div>`
           : '';
 
         const contenuPopup = `
           <div class="popup-content">
-            <b>${pt.nom}</b><br>
+            ${questionSurPlaceHtml}
+            <b>${numero}. ${pt.nom}</b><br>
             <p style="margin: 4px 0; font-size: 0.85rem;">${titreAnim}</p>
             ${boutonHtml}
           </div>
         `;
 
-        const marker = L.marker([pt.lat, pt.lng]).addTo(map).bindPopup(contenuPopup);
+        const numberIcon = L.divIcon({
+          className: 'custom-num-marker',
+          html: `<div class="marker-pin" id="marker-pin-${index}">${numero}</div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+          popupAnchor: [0, -16]
+        });
 
-        if (index === 0) {
-          marker.on('add', function() {
-            if (this._icon) this._icon.id = 'first-blue-marker';
-          });
-        }
+        const marker = L.marker([pt.lat, pt.lng], { icon: numberIcon }).addTo(map).bindPopup(contenuPopup);
+        markersList.push(marker);
 
-        // Événement déclenché uniquement quand LE POP-UP S'OUVRE
-        marker.on('popupopen', function() {
-          declencherGuidagePopUp();
+        // Quand on ferme un point, le point suivant prend le relais en doré
+        marker.on('popupclose', function() {
+          if (index === etapeCouranteIndex && etapeCouranteIndex < markersList.length - 1) {
+            etapeCouranteIndex++;
+            mettreEnAvantPoint(etapeCouranteIndex, true);
+          }
         });
       });
 
-      // Mettre à jour la position de l'utilisateur (Point Bleu)
+      // Mettre en avant le Point 1 dès l'arrivée sur la carte
+      setTimeout(() => mettreEnAvantPoint(0, false), 300);
+
+      // Suivi de la position sur le parcours (point bleu)
       map.on('locationfound', function(e) {
         if (!userMarker) {
           userMarker = L.circleMarker(e.latlng, {
             radius: 8,
-            fillColor: '#1a73e8', // Point Bleu
-            color: '#ffffff',     // Contour blanc
+            fillColor: '#1a73e8',
+            color: '#ffffff',
             weight: 3,
             opacity: 1,
-            fillOpacity: 0.9
-          }).addTo(map).bindPopup("Vous êtes ici (Flèche bleue)");
+            fillOpacity: 0.95
+          }).addTo(map).bindPopup("Vous êtes ici");
         } else {
           userMarker.setLatLng(e.latlng);
         }
       });
 
       map.on('locationerror', function() {
-        alert("Impossible d'accéder à votre géolocalisation. Vérifiez vos autorisations.");
+        alert("Impossible d'accéder à votre position. Vérifiez l'autorisation GPS de votre navigateur.");
       });
-
-      // Lancement automatique Étape 1 (Question sur place / GPS)
-      setTimeout(() => demarrerGuidageGPS(), 400);
     }
 
-    // --- SYSTEME DE GUIDAGE ÉTAPE PAR ÉTAPE ---
-    function demarrerGuidageGPS() {
-      const overlay = document.getElementById('onboarding-overlay');
-      if (overlay) {
-        overlay.classList.add('active');
+    function mettreEnAvantPoint(index, centrerCarte) {
+      document.querySelectorAll('.marker-pin').forEach(el => el.classList.remove('active-step'));
+      const pinEl = document.getElementById(`marker-pin-${index}`);
+      if (pinEl) {
+        pinEl.classList.add('active-step');
+      }
+      if (centrerCarte && mapInstance && markersList[index]) {
+        mapInstance.panTo(markersList[index].getLatLng(), { animate: true });
       }
     }
 
-    function activerGeolocalisationEtContinuer() {
-      if (mapInstance && !isTracking) {
-        mapInstance.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
-        isTracking = true;
+    function repondreSurPlace(estSurPlace) {
+      const box = document.getElementById('popup-gps-question');
+      if (estSurPlace) {
+        if (mapInstance && !isTracking) {
+          mapInstance.locate({ setView: false, maxZoom: 17, watch: true, enableHighAccuracy: true });
+          isTracking = true;
+        }
+        if (box) {
+          box.innerHTML = `<div style="color: #d4af37; font-weight: bold;">✅ Position en direct activée sur le parcours</div>`;
+        }
+      } else {
+        if (box) {
+          box.style.display = 'none';
+        }
       }
-      passerAEtapePoints();
-    }
-
-    function passerAEtapePoints() {
-      document.getElementById('bubble-gps').style.display = 'none';
-
-      const bubblePoints = document.getElementById('bubble-points');
-      if (bubblePoints) bubblePoints.style.display = 'block';
-
-      const firstMarkerIcon = document.getElementById('first-blue-marker');
-      if (firstMarkerIcon) {
-        firstMarkerIcon.classList.add('highlight-marker');
-      }
-    }
-
-    // Déclenché SEULEMENT quand un pop-up est ouvert par l'utilisateur
-    function declencherGuidagePopUp() {
-      const firstMarkerIcon = document.getElementById('first-blue-marker');
-      if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
-      document.getElementById('bubble-points').style.display = 'none';
-
-      const overlay = document.getElementById('onboarding-overlay');
-      if (overlay) overlay.classList.add('active');
-
-      const bubbleAr = document.getElementById('bubble-ar');
-      if (bubbleAr) bubbleAr.style.display = 'block';
-
-      setTimeout(() => {
-        const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
-        if (btnArTarget) btnArTarget.classList.add('highlight-guide');
-      }, 100);
-    }
-
-    function masquerBulleAR() {
-      const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
-      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
-      document.getElementById('bubble-ar').style.display = 'none';
-      passerAEtapeAccueil();
-    }
-
-    function passerAEtapeAccueil() {
-      document.getElementById('bubble-points').style.display = 'none';
-      document.getElementById('bubble-ar').style.display = 'none';
-
-      const bubbleAccueil = document.getElementById('bubble-accueil');
-      if (bubbleAccueil) bubbleAccueil.style.display = 'block';
-
-      const overlay = document.getElementById('onboarding-overlay');
-      if (overlay) overlay.classList.add('active');
-
-      const btnAccueil = document.getElementById('btn-accueil-guide');
-      if (btnAccueil) {
-        btnAccueil.classList.add('highlight-guide');
-      }
-    }
-
-    function fermerToutLeGuidage() {
-      const firstMarkerIcon = document.getElementById('first-blue-marker');
-      if (firstMarkerIcon) firstMarkerIcon.classList.remove('highlight-marker');
-
-      const btnArTarget = document.querySelector('.leaflet-popup-content .btn-ar-target');
-      if (btnArTarget) btnArTarget.classList.remove('highlight-guide');
-
-      const btnAccueil = document.getElementById('btn-accueil-guide');
-      if (btnAccueil) btnAccueil.classList.remove('highlight-guide');
-
-      document.getElementById('bubble-gps').style.display = 'none';
-      document.getElementById('bubble-points').style.display = 'none';
-      document.getElementById('bubble-ar').style.display = 'none';
-      document.getElementById('bubble-accueil').style.display = 'none';
-
-      const overlay = document.getElementById('onboarding-overlay');
-      if (overlay) overlay.classList.remove('active');
     }
 
     // GUIDAGE SPÉCIFIQUE À L'ÉCRAN DE RÉALITÉ AUGMENTÉE
@@ -651,8 +558,6 @@
     }
 
     async function lancerExperience(mediaUrl, avecSon = false) {
-      fermerToutLeGuidage();
-
       const arOverlay = document.getElementById('ar-overlay');
       arOverlay.style.display = 'block';
 
@@ -700,7 +605,6 @@
         isProcessing = true;
         processVideo();
 
-        // Lancement du guidage spécial Souvenir pendant l'expérience RA
         afficherGuidageRA();
       } catch (err) {
         alert("Impossible d'accéder à la caméra : " + err.message);
@@ -722,7 +626,6 @@
       canvasElement.width = personCanvas.width = w;
       canvasElement.height = personCanvas.height = h;
 
-      // 1. Découpage personne
       pCtx.save();
       pCtx.clearRect(0, 0, w, h);
       pCtx.drawImage(results.image, 0, 0, w, h);
@@ -731,7 +634,6 @@
       pCtx.drawImage(results.segmentationMask, 0, 0, w, h);
       pCtx.restore();
 
-      // 2. Rendu final du fond
       ctx.clearRect(0, 0, w, h);
 
       if (isBgVideo && bgVideoElement.readyState >= 2) {
@@ -743,10 +645,8 @@
         ctx.fillRect(0, 0, w, h);
       }
 
-      // 3. Superposition de la personne
       ctx.drawImage(personCanvas, 0, 0, w, h);
 
-      // 4. Incrustation dynamique de la marque MUE.SÉUM
       const fontSize = Math.max(16, Math.round(w * 0.035));
       ctx.save();
       ctx.font = `bold ${fontSize}px -apple-system, sans-serif`;

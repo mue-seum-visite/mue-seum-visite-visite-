@@ -419,17 +419,65 @@
         });
     }
 
+    function calculerPositionFinaleDegagee(pointsExistants, traceExistante) {
+      const dernierPoint = pointsExistants[pointsExistants.length - 1];
+      const latRef = dernierPoint.lat;
+      const lngRef = dernierPoint.lng;
+
+      // Conversion d'environ 100 mètres en degrés selon la latitude
+      const distanceMetres = 100;
+      const deltaLat = distanceMetres / 111320;
+      const deltaLng = distanceMetres / (111320 * Math.cos(latRef * Math.PI / 180));
+
+      // Liste de tous les points existants et sommets du tracé à éviter
+      const obstacles = pointsExistants.map(p => ({ lat: p.lat, lng: p.lng }));
+      if (Array.isArray(traceExistante)) {
+        traceExistante.forEach(coord => {
+          if (Array.isArray(coord) && coord.length >= 2) {
+            obstacles.push({ lat: coord[0], lng: coord[1] });
+          }
+        });
+      }
+
+      // Test de 16 directions autour du dernier point pour choisir la plus dégagée
+      let meilleurePos = { lat: latRef - deltaLat, lng: lngRef + deltaLng };
+      let meilleureDistanceMin = -1;
+
+      for (let i = 0; i < 16; i++) {
+        const angle = (i * 2 * Math.PI) / 16;
+        const candLat = latRef + Math.sin(angle) * deltaLat;
+        const candLng = lngRef + Math.cos(angle) * deltaLng;
+
+        let distMin = Infinity;
+        for (const obs of obstacles) {
+          const dLat = (candLat - obs.lat) * 111320;
+          const dLng = (candLng - obs.lng) * 111320 * Math.cos(latRef * Math.PI / 180);
+          const dist = Math.hypot(dLat, dLng);
+          if (dist < distMin) distMin = dist;
+        }
+
+        if (distMin > meilleureDistanceMin) {
+          meilleureDistanceMin = distMin;
+          meilleurePos = { lat: candLat, lng: candLng };
+        }
+      }
+
+      return meilleurePos;
+    }
+
     function initialiserCarte(data) {
       const points = [...(data.points || [])];
       if (points.length === 0) return;
 
-      // Ajout automatique de la bulle supplémentaire "Me rendre à la balade" si un lien GPS existe
+      // Ajout automatique de la bulle supplémentaire "Me rendre à la balade" à ~100 m du dernier point, hors tracé
+      let posFinaleAjoutee = null;
       if (data.gps && data.gps.trim() !== '') {
+        posFinaleAjoutee = calculerPositionFinaleDegagee(points, data.trace);
         points.push({
           nom: "Me rendre à la balade",
           titre_animation: "Envie de vivre ce parcours sur place ? Lancez votre GPS pour rejoindre le point de départ.",
-          lat: points[0].lat - 0.00025,
-          lng: points[0].lng + 0.00025,
+          lat: posFinaleAjoutee.lat,
+          lng: posFinaleAjoutee.lng,
           video: "",
           isGpsFinal: true,
           gpsUrl: data.gps.trim()
@@ -498,7 +546,14 @@
           dashArray: '8, 8'
         }).addTo(map);
 
-        map.fitBounds(routePath.getBounds(), { padding: [40, 40] });
+        const bounds = routePath.getBounds();
+        if (posFinaleAjoutee) {
+          bounds.extend([posFinaleAjoutee.lat, posFinaleAjoutee.lng]);
+        }
+        map.fitBounds(bounds, { padding: [40, 40] });
+      } else if (points.length > 1) {
+        const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
       }
 
       // Création des marqueurs numérotés 1, 2, 3...

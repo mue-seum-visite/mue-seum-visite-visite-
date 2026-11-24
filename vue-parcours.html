@@ -141,6 +141,40 @@
       cursor: pointer;
     }
 
+    /* Bulle de guidage initiale sur la carte */
+    .map-start-hint {
+      position: fixed;
+      bottom: calc(54px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 340px;
+      background: rgba(28, 28, 30, 0.95);
+      border: 2px solid #d4af37;
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: #f0f0f0;
+      line-height: 1.35;
+    }
+    .btn-hint-ok {
+      background: #d4af37;
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
     /* Marqueurs bleus numérotés */
     .custom-num-marker {
       background: transparent;
@@ -175,7 +209,7 @@
       50% { transform: scale(1.18); }
     }
 
-    /* Clignotement rouge du bouton Accueil à la fermeture de la dernière animation */
+    /* Clignotement rouge du bouton Accueil sur la dernière bulle */
     .blink-accueil-red {
       animation: accueilRedBlink 0.9s infinite ease-in-out !important;
     }
@@ -341,6 +375,12 @@
 
   <div id="map"></div>
 
+  <!-- BULLE GUIDAGE INITIALE SUR LA CARTE -->
+  <div id="map-start-hint" class="map-start-hint">
+    <span>🔵 Appuyez sur les <b>boutons bleus numérotés</b> pour explorer chaque étape du parcours.</span>
+    <button class="btn-hint-ok" onclick="fermerBulleDepart()">Compris</button>
+  </div>
+
   <div id="ar-overlay">
     <button class="btn-close-ar" onclick="fermerExperience()">❌ Fermer</button>
     
@@ -394,6 +434,11 @@
 
     const personCanvas = document.createElement('canvas');
     const pCtx = personCanvas.getContext('2d');
+
+    function fermerBulleDepart() {
+      const hint = document.getElementById('map-start-hint');
+      if (hint) hint.style.display = 'none';
+    }
 
     window.onpopstate = function(event) {
       const arOverlay = document.getElementById('ar-overlay');
@@ -600,6 +645,15 @@
 
         const marker = L.marker([pt.lat, pt.lng], { icon: numberIcon }).addTo(map).bindPopup(contenuPopup);
         markersList.push(marker);
+
+        // Masque la bulle de départ dès l'ouverture d'un point et fait clignoter Accueil sur la dernière bulle
+        marker.on('popupopen', function() {
+          fermerBulleDepart();
+          if (index === markersList.length - 1) {
+            parcoursTermine = true;
+            activerClignotementAccueil();
+          }
+        });
 
         // Quand on ferme un point, le point suivant prend le relais en doré — ou clignotement rouge d'Accueil à la fin
         marker.on('popupclose', function() {
